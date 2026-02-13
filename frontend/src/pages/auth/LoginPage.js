@@ -56,7 +56,7 @@ export default function LoginPage() {
   const redirectUser = (u) => {
     const role = u?.global_role;
     if (role === 'END_CUSTOMER') navigate('/portal');
-    else if (['GLOBAL_SUPER_ADMIN', 'DDYS_COMPLIANCE_MANAGER'].includes(role)) navigate('/admin');
+    else if (role === 'GLOBAL_SUPER_ADMIN') navigate('/admin');
     else navigate('/workspace/cases');
   };
 
