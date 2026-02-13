@@ -54,8 +54,7 @@ export function AuthProvider({ children }) {
     if (!user) return null;
     const role = user.global_role;
     if (role === 'END_CUSTOMER') return 'customer';
-    if (ADMIN_ROLES.includes(role)) return 'admin';
-    if (TENANT_ROLES.includes(role)) return 'tenant';
+    if (ADMIN_ONLY_ROLES.includes(role)) return 'admin';
     return 'tenant';
   }, [user]);
 
