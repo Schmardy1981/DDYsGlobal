@@ -103,11 +103,22 @@ export default function LoginPage() {
             </p>
           </CardHeader>
           <CardContent>
-            {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700" data-testid="login-error">
-                {error}
-              </div>
-            )}
+            {/* Error Popup Dialog */}
+            <Dialog open={!!error} onOpenChange={(open) => { if (!open) setError(''); }}>
+              <DialogContent className="max-w-sm">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2 text-red-700 font-['IBM_Plex_Sans']">
+                    <AlertCircle size={20} /> Login Failed
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="py-2">
+                  <p className="text-sm text-[#0F172A]" data-testid="login-error">{error}</p>
+                </div>
+                <Button variant="outline" className="w-full" onClick={() => setError('')} data-testid="close-error-btn">
+                  Close
+                </Button>
+              </DialogContent>
+            </Dialog>
 
             {!mfaMode ? (
               <form onSubmit={handleLogin} className="space-y-4">
