@@ -1,15 +1,11 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, Request
+from fastapi.responses import FileResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict
-from typing import List
-import uuid
-from datetime import datetime, timezone
-
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -19,56 +15,13 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# Create the main app without a prefix
-app = FastAPI()
+# Create the main app
+app = FastAPI(title="DDYs Compliance Platform", version="1.0.0")
 
-# Create a router with the /api prefix
-api_router = APIRouter(prefix="/api")
+# Store db in app state for route access
+app.state.db = db
 
-
-# Define Models
-class StatusCheck(BaseModel):
-    model_config = ConfigDict(extra="ignore")  # Ignore MongoDB's _id field
-    
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-class StatusCheckCreate(BaseModel):
-    client_name: str
-
-# Add your routes to the router instead of directly to app
-@api_router.get("/")
-async def root():
-    return {"message": "Hello World"}
-
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.model_dump()
-    status_obj = StatusCheck(**status_dict)
-    
-    # Convert to dict and serialize datetime to ISO string for MongoDB
-    doc = status_obj.model_dump()
-    doc['timestamp'] = doc['timestamp'].isoformat()
-    
-    _ = await db.status_checks.insert_one(doc)
-    return status_obj
-
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    # Exclude MongoDB's _id field from the query results
-    status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
-    
-    # Convert ISO string timestamps back to datetime objects
-    for check in status_checks:
-        if isinstance(check['timestamp'], str):
-            check['timestamp'] = datetime.fromisoformat(check['timestamp'])
-    
-    return status_checks
-
-# Include the router in the main app
-app.include_router(api_router)
-
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
@@ -83,6 +36,97 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+# Import and include routers
+from routes.auth import router as auth_router
+from routes.tenants import router as tenants_router
+from routes.cases import router as cases_router
+from routes.documents import router as documents_router
+from routes.screening import router as screening_router
+from routes.risk import router as risk_router
+from routes.waivers import router as waivers_router
+from routes.approvals import router as approvals_router
+from routes.audit import router as audit_router
+from routes.mi import router as mi_router
+from routes.policy import router as policy_router
+from routes.admin import router as admin_router
+from routes.customer_portal import router as customer_router
+from routes.notifications import router as notifications_router
+from routes.edr import router as edr_router
+
+app.include_router(auth_router)
+app.include_router(tenants_router)
+app.include_router(cases_router)
+app.include_router(documents_router)
+app.include_router(screening_router)
+app.include_router(risk_router)
+app.include_router(waivers_router)
+app.include_router(approvals_router)
+app.include_router(audit_router)
+app.include_router(mi_router)
+app.include_router(policy_router)
+app.include_router(admin_router)
+app.include_router(customer_router)
+app.include_router(notifications_router)
+app.include_router(edr_router)
+
+
+@app.get("/api")
+async def root():
+    return {"message": "DDYs Compliance Platform API", "version": "1.0.0"}
+
+
+@app.get("/api/health")
+async def health():
+    return {"status": "healthy", "service": "ddys-compliance"}
+
+
+@app.post("/api/seed")
+async def seed_data():
+    """Public seed endpoint for initial setup."""
+    existing = await db.tenants.find_one({"name": "Demo Bank"}, {"_id": 0})
+    if existing:
+        return {"message": "Demo data already exists", "tenant_id": existing["id"]}
+    from routes.seed import seed_all
+    result = await seed_all(db)
+    return result
+
+
+# OSINT endpoint
+@app.post("/api/osint/analyze")
+async def osint_analyze(request: Request):
+    from middleware.auth_middleware import get_current_user
+    user = await get_current_user(request)
+    body = await request.json()
+    from services.osint_service import run_osint_analysis
+    result = await run_osint_analysis(db, body["case_id"], body["party_id"])
+    return result
+
+
+# KYC Export endpoint
+@app.post("/api/export/kyc/{case_id}")
+async def export_kyc(case_id: str, request: Request):
+    from middleware.auth_middleware import get_current_user
+    user = await get_current_user(request)
+    from services.export_service import export_kyc_file
+    result = await export_kyc_file(db, case_id)
+    return result
+
+
+@app.get("/api/export/download/{export_id}")
+async def download_export(export_id: str, request: Request):
+    from middleware.auth_middleware import get_current_user
+    user = await get_current_user(request)
+    export_rec = await db.kyc_exports.find_one({"id": export_id}, {"_id": 0})
+    if not export_rec:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Export not found")
+    return FileResponse(
+        export_rec["storage_path"],
+        media_type="application/zip",
+        filename=export_rec["filename"]
+    )
+
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
