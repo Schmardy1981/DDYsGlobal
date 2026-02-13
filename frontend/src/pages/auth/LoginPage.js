@@ -103,22 +103,30 @@ export default function LoginPage() {
             </p>
           </CardHeader>
           <CardContent>
-            {/* Error Popup Dialog */}
-            <Dialog open={!!error} onOpenChange={(open) => { if (!open) setError(''); }}>
-              <DialogContent className="max-w-sm">
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2 text-red-700 font-['IBM_Plex_Sans']">
-                    <AlertCircle size={20} /> Login Failed
-                  </DialogTitle>
-                </DialogHeader>
-                <div className="py-2">
-                  <p className="text-sm text-[#0F172A]" data-testid="login-error">{error}</p>
+            {/* Error Popup Overlay */}
+            {error && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" data-testid="login-error-overlay">
+                <div className="bg-white rounded-lg shadow-xl w-full max-w-sm mx-4 overflow-hidden">
+                  <div className="flex items-center justify-between p-4 border-b border-[#E2E8F0]">
+                    <div className="flex items-center gap-2 text-red-700">
+                      <AlertCircle size={20} />
+                      <span className="font-semibold font-['IBM_Plex_Sans']">Login Failed</span>
+                    </div>
+                    <button onClick={() => setError('')} className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-[#F1F5F9] transition-colors" data-testid="close-error-btn">
+                      <X size={16} className="text-[#64748B]" />
+                    </button>
+                  </div>
+                  <div className="p-4">
+                    <p className="text-sm text-[#0F172A]" data-testid="login-error">{error}</p>
+                  </div>
+                  <div className="px-4 pb-4">
+                    <Button variant="outline" className="w-full" onClick={() => setError('')}>
+                      Close
+                    </Button>
+                  </div>
                 </div>
-                <Button variant="outline" className="w-full" onClick={() => setError('')} data-testid="close-error-btn">
-                  Close
-                </Button>
-              </DialogContent>
-            </Dialog>
+              </div>
+            )}
 
             {!mfaMode ? (
               <form onSubmit={handleLogin} className="space-y-4">
