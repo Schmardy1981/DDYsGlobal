@@ -71,7 +71,12 @@ async def _check_nrd_and_generate_rr(db, now: datetime):
         "status": "completed",
         "nrd_date": {"$ne": None},
         "deleted": {"$ne": True}
-    }, {"_id": 0}).to_list(5000)
+    }, {
+        "_id": 0, "id": 1, "nrd_date": 1, "tenant_id": 1, "case_ref": 1,
+        "risk_rating": 1, "due_diligence_level": 1, "jurisdiction": 1,
+        "product_scope": 1, "assigned_maker_id": 1, "assigned_checker_id": 1,
+        "assigned_mlro_id": 1
+    }).to_list(5000)
 
     rr_created = 0
     for case in completed_cases:
