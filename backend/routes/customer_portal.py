@@ -231,3 +231,147 @@ async def get_customer_notifications(request: Request):
         {"_id": 0}
     ).sort("created_at", -1).to_list(50)
     return notifs
+
+
+
+@router.get("/invite/{token}")
+async def get_invite(token: str, request: Request):
+    """Get invite details by token (no auth required)."""
+    db = get_db(request)
+    invite = await db.customer_invites.find_one({"token": token}, {"_id": 0})
+    if not invite:
+        raise HTTPException(status_code=404, detail="Invalid invite link")
+
+    case = await db.cases.find_one({"id": invite["case_id"]}, {"_id": 0})
+    tenant = await db.tenants.find_one({"id": invite["tenant_id"]}, {"_id": 0})
+
+    return {
+        "invite": invite,
+        "case_ref": case.get("case_ref") if case else None,
+        "tenant_name": tenant.get("name") if tenant else None,
+        "tenant_branding": tenant.get("branding_json") if tenant else None
+    }
+
+
+@router.post("/invite/{token}/accept")
+async def accept_invite(token: str, request: Request):
+    """Accept invite and get auth token. Customer enters email + receives OTP."""
+    db = get_db(request)
+    body = await request.json()
+    email = body.get("email")
+
+    invite = await db.customer_invites.find_one({"token": token}, {"_id": 0})
+    if not invite:
+        raise HTTPException(status_code=404, detail="Invalid invite")
+
+    # Verify email matches
+    if invite["email"].lower() != email.lower():
+        raise HTTPException(status_code=400, detail="Email does not match the invitation")
+
+    # Generate OTP
+    otp_code = "123456"  # MOCK
+    await db.otp_codes.insert_one({
+        "user_id": invite["customer_user_id"],
+        "email": email,
+        "code": otp_code,
+        "tenant_id": invite["tenant_id"],
+        "case_ref": invite.get("case_ref"),
+        "expires_at": (datetime.now(timezone.utc) + __import__('datetime').timedelta(minutes=10)).isoformat(),
+        "used": False
+    })
+
+    return {"message": "OTP sent (demo: 123456)", "demo_otp": "123456"}
+
+
+@router.post("/invite/{token}/verify")
+async def verify_invite_otp(token: str, request: Request):
+    """Verify OTP and return auth token for invited customer."""
+    db = get_db(request)
+    body = await request.json()
+    code = body.get("code")
+
+    invite = await db.customer_invites.find_one({"token": token}, {"_id": 0})
+    if not invite:
+        raise HTTPException(status_code=404, detail="Invalid invite")
+
+    # Verify OTP
+    otp = await db.otp_codes.find_one(
+        {"email": invite["email"], "code": code, "used": False},
+        {"_id": 0}
+    )
+    if not otp:
+        raise HTTPException(status_code=401, detail="Invalid OTP")
+
+    await db.otp_codes.update_one({"email": invite["email"], "code": code}, {"$set": {"used": True}})
+
+    # Mark invite accepted
+    await db.customer_invites.update_one(
+        {"token": token},
+        {"$set": {"status": "accepted", "accepted_at": datetime.now(timezone.utc).isoformat()}}
+    )
+
+    # Get user
+    user = await db.users.find_one({"id": invite["customer_user_id"]}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Create JWT token
+    import jwt as pyjwt
+    import os
+    JWT_SECRET = os.environ.get('JWT_SECRET')
+    from datetime import timedelta
+    token_payload = {
+        "user_id": user["id"],
+        "email": user["email"],
+        "name": user.get("name", ""),
+        "global_role": "END_CUSTOMER",
+        "tenant_roles": [{"tenant_id": invite["tenant_id"], "role": "END_CUSTOMER"}],
+        "case_id": invite["case_id"],
+        "mfa_verified": True,
+        "exp": datetime.now(timezone.utc) + timedelta(hours=24)
+    }
+    auth_token = pyjwt.encode(token_payload, JWT_SECRET, algorithm="HS256")
+
+    safe_user = {k: v for k, v in user.items() if k not in ["password_hash", "mfa_secret"]}
+    safe_user["tenant_roles"] = [{"tenant_id": invite["tenant_id"], "role": "END_CUSTOMER"}]
+    safe_user["case_id"] = invite["case_id"]
+
+    return {
+        "token": auth_token,
+        "user": safe_user,
+        "case_id": invite["case_id"],
+        "tenant_id": invite["tenant_id"]
+    }
+
+
+@router.get("/case-by-id/{case_id}")
+async def get_case_by_id(case_id: str, request: Request):
+    """Get case data directly by case_id for invited customers."""
+    from middleware.auth_middleware import get_current_user
+    user = await get_current_user(request)
+    db = get_db(request)
+
+    case = await db.cases.find_one({"id": case_id, "deleted": {"$ne": True}}, {"_id": 0})
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found")
+
+    requirements = await db.requirement_items.find({"case_id": case_id}, {"_id": 0}).to_list(500)
+    documents = await db.documents.find({"case_id": case_id}, {"_id": 0}).to_list(500)
+    parties = await db.parties.find({"case_id": case_id, "deleted": {"$ne": True}}, {"_id": 0}).to_list(100)
+    session = await db.questionnaire_sessions.find_one({"case_id": case_id}, {"_id": 0})
+    reminders = await db.email_reminders.find({"case_id": case_id}, {"_id": 0}).sort("created_at", -1).to_list(50)
+
+    return {
+        "case": case,
+        "requirements": requirements,
+        "documents": [{
+            "id": d["id"], "doc_type": d["doc_type"], "status": d["status"],
+            "original_filename": d.get("original_filename"),
+            "requirement_item_id": d.get("requirement_item_id"),
+            "ai_result_id": d.get("ai_result_id"),
+            "created_at": d.get("created_at")
+        } for d in documents],
+        "parties": parties,
+        "questionnaire": session,
+        "reminders": reminders
+    }
