@@ -83,6 +83,11 @@ export default function TenantLayout() {
             {activeTenant && <span className="text-xs text-[#64748B]">{activeTenant.default_jurisdiction}</span>}
           </div>
           <div className="flex items-center gap-3">
+            {user?.global_role === 'GLOBAL_SUPER_ADMIN' && (
+              <Button variant="outline" size="sm" onClick={() => navigate('/admin')} className="text-xs" data-testid="switch-to-admin">
+                <ArrowRightLeft size={14} className="mr-1" /> Admin
+              </Button>
+            )}
             <NotificationBell />
             <div className="text-right">
               <p className="text-sm font-medium leading-none">{user?.name}</p>
