@@ -71,6 +71,8 @@ app.include_router(admin_router)
 app.include_router(customer_router)
 app.include_router(notifications_router)
 app.include_router(edr_router)
+app.include_router(qa_router)
+app.include_router(video_ident_router)
 
 
 @app.get("/api")
