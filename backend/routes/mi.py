@@ -19,8 +19,10 @@ async def get_dashboard(request: Request, tenant_id: Optional[str] = None):
     if tenant_id:
         query["tenant_id"] = tenant_id
     
-    # Pipeline volumes by stage
-    cases = await db.cases.find(query, {"_id": 0}).to_list(5000)
+    # Pipeline volumes by stage - only fetch fields needed for aggregation
+    cases = await db.cases.find(query, {
+        "_id": 0, "id": 1, "status": 1, "risk_rating": 1, "case_type": 1, "nrd_date": 1
+    }).to_list(5000)
     
     pipeline = {}
     risk_dist = {"low": 0, "medium": 0, "high": 0, "unrated": 0}
