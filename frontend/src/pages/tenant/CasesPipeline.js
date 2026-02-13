@@ -47,7 +47,9 @@ export default function CasesPipeline() {
 
   const handleCreate = async () => {
     try {
-      const res = await api.post('/cases', { tenant_id: tenantId, ...newCase });
+      const tid = tenantId || (await api.get('/tenants').then(r => r.data[0]?.id));
+      if (!tid) { alert('No tenant available'); return; }
+      const res = await api.post('/cases', { tenant_id: tid, ...newCase });
       setShowCreate(false);
       navigate(`/workspace/case/${res.data.id}`);
     } catch (err) { alert(err.response?.data?.detail || 'Failed'); }
