@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-02-13T15:25:48.094172",
-  "total_tests": 16,
-  "passed_tests": 15,
-  "success_rate": "93.8%",
+  "timestamp": "2026-02-13T15:46:32.308919",
+  "total_tests": 26,
+  "passed_tests": 24,
+  "success_rate": "92.3%",
   "results": [
     {
       "test_name": "Health Check",
@@ -10,7 +10,13 @@
       "message": "Status: 200",
       "response_data": {
         "status": "healthy",
-        "service": "ddys-compliance"
+        "service": "ddys-compliance",
+        "periodic_jobs": {
+          "key": "periodic_jobs",
+          "last_run": "2026-02-13T15:44:11.172367+00:00",
+          "next_run": "2026-02-13T16:40:40.416969+00:00",
+          "status": "manual_run_complete"
+        }
       }
     },
     {
@@ -29,7 +35,7 @@
       "response_data": {
         "requires_mfa": false,
         "mfa_token": null,
-        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZDhjNzA2ZDAtNDFmZS00YTMyLTk2MTItYWQwMmZhMDFlNGU5IiwiZW1haWwiOiJhZG1pbkBkZHlzLmNvbSIsIm5hbWUiOiJQbGF0Zm9ybSBBZG1pbiIsImdsb2JhbF9yb2xlIjoiR0xPQkFMX1NVUEVSX0FETUlOIiwidGVuYW50X3JvbGVzIjpbXSwibWZhX3ZlcmlmaWVkIjp0cnVlLCJleHAiOjE3NzEwMzk1NDV9.SOiM1Tdg-ntY4qnqjUp6ntJMUgeH00a7pIapMu-M0XQ",
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZDhjNzA2ZDAtNDFmZS00YTMyLTk2MTItYWQwMmZhMDFlNGU5IiwiZW1haWwiOiJhZG1pbkBkZHlzLmNvbSIsIm5hbWUiOiJQbGF0Zm9ybSBBZG1pbiIsImdsb2JhbF9yb2xlIjoiR0xPQkFMX1NVUEVSX0FETUlOIiwidGVuYW50X3JvbGVzIjpbXSwibWZhX3ZlcmlmaWVkIjp0cnVlLCJleHAiOjE3NzEwNDA3ODd9.DuXIV6m6KDbyCUkBooTLdR0sblAaYiyQ5vwnCrCmN6c",
         "user": {
           "id": "d8c706d0-41fe-4a32-9612-ad02fa01e4e9",
           "email": "admin@ddys.com",
@@ -50,7 +56,7 @@
       "response_data": {
         "requires_mfa": false,
         "mfa_token": null,
-        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZWY3ZjgxOTQtN2IwZi00YzJmLWJjODctY2QwNmJkYjNlNDgyIiwiZW1haWwiOiJtYWtlckBkZHlzLmNvbSIsIm5hbWUiOiJTYXJhaCBNYWtlciIsImdsb2JhbF9yb2xlIjoiRERZU19SQ01fTUFLRVIiLCJ0ZW5hbnRfcm9sZXMiOlt7ImlkIjoiZjdlODk2YmMtZDFlZS00MTcwLThjYjYtMjBkZTg2NDE2ZjAxIiwidXNlcl9pZCI6ImVmN2Y4MTk0LTdiMGYtNGMyZi1iYzg3LWNkMDZiZGIzZTQ4MiIsInRlbmFudF9pZCI6IjgxODljMDU2LWE1YWUtNDk5Yi1iOGE1LWJiYmQzZmNjMTdiNyIsInJvbGUiOiJERFlTX1JDTV9NQUtFUiIsImFjdGl2ZSI6dHJ1ZSwiY3JlYXRlZF9hdCI6IjIwMjYtMDItMTNUMTU6MDc6NDUuMjg1MTM4KzAwOjAwIn1dLCJtZmFfdmVyaWZpZWQiOnRydWUsImV4cCI6MTc3MTAzOTU0NX0.peT8vUi4Lc6Rlo9xwDuKOq3FfeGkxoZd_Uc3DaTsoUA",
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZWY3ZjgxOTQtN2IwZi00YzJmLWJjODctY2QwNmJkYjNlNDgyIiwiZW1haWwiOiJtYWtlckBkZHlzLmNvbSIsIm5hbWUiOiJTYXJhaCBNYWtlciIsImdsb2JhbF9yb2xlIjoiRERZU19SQ01fTUFLRVIiLCJ0ZW5hbnRfcm9sZXMiOlt7ImlkIjoiZjdlODk2YmMtZDFlZS00MTcwLThjYjYtMjBkZTg2NDE2ZjAxIiwidXNlcl9pZCI6ImVmN2Y4MTk0LTdiMGYtNGMyZi1iYzg3LWNkMDZiZGIzZTQ4MiIsInRlbmFudF9pZCI6IjgxODljMDU2LWE1YWUtNDk5Yi1iOGE1LWJiYmQzZmNjMTdiNyIsInJvbGUiOiJERFlTX1JDTV9NQUtFUiIsImFjdGl2ZSI6dHJ1ZSwiY3JlYXRlZF9hdCI6IjIwMjYtMDItMTNUMTU6MDc6NDUuMjg1MTM4KzAwOjAwIn1dLCJtZmFfdmVyaWZpZWQiOnRydWUsImV4cCI6MTc3MTA0MDc4OH0.LkaPHQdFAO8zerX2kSrL8gkinYwPXxngOaWI9x5BOG0",
         "user": {
           "id": "ef7f8194-7b0f-4c2f-bc87-cd06bdb3e482",
           "email": "maker@ddys.com",
@@ -80,7 +86,7 @@
       "response_data": {
         "requires_mfa": false,
         "mfa_token": null,
-        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZTBjM2NjZDUtMzI4ZC00MzI1LWI5NWItNjhhMzM2YTFiMmZhIiwiZW1haWwiOiJjdXN0b21lckBleGFtcGxlLmNvbSIsIm5hbWUiOiJKb2huIEN1c3RvbWVyIiwiZ2xvYmFsX3JvbGUiOiJFTkRfQ1VTVE9NRVIiLCJ0ZW5hbnRfcm9sZXMiOltdLCJtZmFfdmVyaWZpZWQiOnRydWUsImV4cCI6MTc3MTAzOTU0Nn0.GrvGM_2iL9lau3isCgPxr_P4ODNmI6tmhQS_jlLX54A",
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZTBjM2NjZDUtMzI4ZC00MzI1LWI5NWItNjhhMzM2YTFiMmZhIiwiZW1haWwiOiJjdXN0b21lckBleGFtcGxlLmNvbSIsIm5hbWUiOiJKb2huIEN1c3RvbWVyIiwiZ2xvYmFsX3JvbGUiOiJFTkRfQ1VTVE9NRVIiLCJ0ZW5hbnRfcm9sZXMiOltdLCJtZmFfdmVyaWZpZWQiOnRydWUsImV4cCI6MTc3MTA0MDc4OH0.FcX4o9rPF3JLTa3TuKjPJ3ZSHCdkbT1Aj7G37sX78Ik",
         "user": {
           "id": "e0c3ccd5-328d-4325-b95b-68a336a1b2fa",
           "email": "customer@example.com",
@@ -122,6 +128,29 @@
       "success": true,
       "message": "Status: 200",
       "response_data": [
+        {
+          "id": "c77d4ab8-6ce5-4141-906d-9ed4e07fecbc",
+          "case_ref": "DDY-20260213-B92F4C",
+          "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
+          "case_type": "onboarding",
+          "status": "draft",
+          "risk_rating": "low",
+          "due_diligence_level": "cdd",
+          "jurisdiction": "EU",
+          "product_scope": "Corporate Banking",
+          "nrd_date": null,
+          "created_by": "d8c706d0-41fe-4a32-9612-ad02fa01e4e9",
+          "assigned_maker_id": null,
+          "assigned_checker_id": null,
+          "assigned_mlro_id": null,
+          "sla_json": {},
+          "narrative": "",
+          "narrative_sections": {},
+          "last_action_at": "2026-02-13T15:25:46.790549+00:00",
+          "created_at": "2026-02-13T15:25:46.790554+00:00",
+          "updated_at": "2026-02-13T15:25:47.278531+00:00",
+          "deleted": false
+        },
         {
           "id": "0a84d7eb-65fd-4582-8fba-3e661a7191c5",
           "case_ref": "DDY-20260213-66EF8A",
@@ -177,8 +206,8 @@
       "success": true,
       "message": "Status: 200",
       "response_data": {
-        "id": "c77d4ab8-6ce5-4141-906d-9ed4e07fecbc",
-        "case_ref": "DDY-20260213-B92F4C",
+        "id": "a359cbff-224f-4c11-8ada-987f717aa346",
+        "case_ref": "DDY-20260213-64BADE",
         "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
         "case_type": "onboarding",
         "status": "draft",
@@ -194,9 +223,9 @@
         "sla_json": {},
         "narrative": "",
         "narrative_sections": {},
-        "last_action_at": "2026-02-13T15:25:46.790549+00:00",
-        "created_at": "2026-02-13T15:25:46.790554+00:00",
-        "updated_at": "2026-02-13T15:25:46.790556+00:00",
+        "last_action_at": "2026-02-13T15:46:29.225217+00:00",
+        "created_at": "2026-02-13T15:46:29.225223+00:00",
+        "updated_at": "2026-02-13T15:46:29.225225+00:00",
         "deleted": false
       }
     },
@@ -205,8 +234,8 @@
       "success": true,
       "message": "Status: 200",
       "response_data": {
-        "id": "c77d4ab8-6ce5-4141-906d-9ed4e07fecbc",
-        "case_ref": "DDY-20260213-B92F4C",
+        "id": "a359cbff-224f-4c11-8ada-987f717aa346",
+        "case_ref": "DDY-20260213-64BADE",
         "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
         "case_type": "onboarding",
         "status": "draft",
@@ -222,9 +251,9 @@
         "sla_json": {},
         "narrative": "",
         "narrative_sections": {},
-        "last_action_at": "2026-02-13T15:25:46.790549+00:00",
-        "created_at": "2026-02-13T15:25:46.790554+00:00",
-        "updated_at": "2026-02-13T15:25:46.790556+00:00",
+        "last_action_at": "2026-02-13T15:46:29.225217+00:00",
+        "created_at": "2026-02-13T15:46:29.225223+00:00",
+        "updated_at": "2026-02-13T15:46:29.225225+00:00",
         "deleted": false,
         "parties": [],
         "requirements": [],
@@ -240,19 +269,19 @@
       "success": true,
       "message": "Status: 200",
       "response_data": {
-        "id": "2c7e32b2-b509-47bd-9f94-b04ab891e41c",
+        "id": "6b23fbea-0b2b-49e1-8a4e-357910194441",
         "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
-        "case_id": "c77d4ab8-6ce5-4141-906d-9ed4e07fecbc",
+        "case_id": "a359cbff-224f-4c11-8ada-987f717aa346",
         "run_type": "sanctions",
         "provider": "mock",
-        "started_at": "2026-02-13T15:25:47.118901+00:00",
+        "started_at": "2026-02-13T15:46:29.507065+00:00",
         "finished_at": null,
         "status": "running",
         "parameters_json": {
           "parties_count": 0,
           "run_type": "sanctions"
         },
-        "created_at": "2026-02-13T15:25:47.118912+00:00",
+        "created_at": "2026-02-13T15:46:29.507075+00:00",
         "hits": []
       }
     },
@@ -261,9 +290,9 @@
       "success": true,
       "message": "Status: 200",
       "response_data": {
-        "id": "162e7b45-0010-45a5-a146-e78101acf115",
+        "id": "e5b5c9d0-8da4-4cb7-aca0-3d71ed358d5d",
         "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
-        "case_id": "c77d4ab8-6ce5-4141-906d-9ed4e07fecbc",
+        "case_id": "a359cbff-224f-4c11-8ada-987f717aa346",
         "methodology": "CRRM-like",
         "inputs_json": {
           "country": 2,
@@ -288,7 +317,7 @@
         "challenge_reason": null,
         "approved_by_mlro": null,
         "approved_at": null,
-        "created_at": "2026-02-13T15:25:47.278022+00:00"
+        "created_at": "2026-02-13T15:46:29.681976+00:00"
       }
     },
     {
@@ -296,13 +325,13 @@
       "success": true,
       "message": "Status: 200",
       "response_data": {
-        "id": "b6736c11-3d63-450e-85b1-408b1a222c45",
-        "case_id": "c77d4ab8-6ce5-4141-906d-9ed4e07fecbc",
+        "id": "50cbc6cc-0911-4e00-b1ae-27460b075ff0",
+        "case_id": "a359cbff-224f-4c11-8ada-987f717aa346",
         "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
-        "filename": "KYC_Export_DDY-20260213-B92F4C_20260213_152547.zip",
-        "storage_path": "/app/backend/exports/KYC_Export_DDY-20260213-B92F4C_20260213_152547.zip",
-        "file_size": 3971,
-        "created_at": "2026-02-13T15:25:47.443919+00:00"
+        "filename": "KYC_Export_DDY-20260213-64BADE_20260213_154629.zip",
+        "storage_path": "/app/backend/exports/KYC_Export_DDY-20260213-64BADE_20260213_154629.zip",
+        "file_size": 3964,
+        "created_at": "2026-02-13T15:46:29.891197+00:00"
       }
     },
     {
@@ -319,7 +348,7 @@
       "success": true,
       "message": "Status: 200",
       "response_data": {
-        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNmNlZjgxNmEtY2Q1MC00OWU1LWFlYTEtM2U1MzU3MTMzYTgxIiwiZW1haWwiOiJ0ZXN0LWN1c3RvbWVyQGV4YW1wbGUuY29tIiwibmFtZSI6InRlc3QtY3VzdG9tZXIiLCJnbG9iYWxfcm9sZSI6IkVORF9DVVNUT01FUiIsInRlbmFudF9yb2xlcyI6W3sidGVuYW50X2lkIjoiODE4OWMwNTYtYTVhZS00OTliLWI4YTUtYmJiZDNmY2MxN2I3Iiwicm9sZSI6IkVORF9DVVNUT01FUiJ9XSwibWZhX3ZlcmlmaWVkIjp0cnVlLCJleHAiOjE3NzEwMzk1NDd9.YHeD0nq-Bvy06LVlaGUDKZftLqrFbnCGmHk0HdGiLFQ",
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNmNlZjgxNmEtY2Q1MC00OWU1LWFlYTEtM2U1MzU3MTMzYTgxIiwiZW1haWwiOiJ0ZXN0LWN1c3RvbWVyQGV4YW1wbGUuY29tIiwibmFtZSI6InRlc3QtY3VzdG9tZXIiLCJnbG9iYWxfcm9sZSI6IkVORF9DVVNUT01FUiIsInRlbmFudF9yb2xlcyI6W3sidGVuYW50X2lkIjoiODE4OWMwNTYtYTVhZS00OTliLWI4YTUtYmJiZDNmY2MxN2I3Iiwicm9sZSI6IkVORF9DVVNUT01FUiJ9XSwibWZhX3ZlcmlmaWVkIjp0cnVlLCJleHAiOjE3NzEwNDA3OTB9.T_V4_8IW4gh86Ey5bM9Kj7R9pcm7e5PCAtIrXS1N9-8",
         "user": {
           "id": "6cef816a-cd50-49e5-aea1-3e5357133a81",
           "email": "test-customer@example.com",
@@ -344,13 +373,13 @@
       "message": "Status: 200",
       "response_data": {
         "total_tenants": 1,
-        "total_cases": 3,
+        "total_cases": 4,
         "tenant_stats": [
           {
             "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
             "tenant_name": "Demo Bank",
-            "total_cases": 3,
-            "active_cases": 3,
+            "total_cases": 4,
+            "active_cases": 4,
             "status": "active"
           }
         ],
@@ -364,6 +393,236 @@
       "test_name": "MI Tenant Stats",
       "success": false,
       "message": "Expected 200, got 404 - Not Found",
+      "response_data": null
+    },
+    {
+      "test_name": "Get Jobs Status",
+      "success": true,
+      "message": "Status: 200",
+      "response_data": {
+        "key": "periodic_jobs",
+        "last_run": "2026-02-13T15:44:11.172367+00:00",
+        "next_run": "2026-02-13T16:40:40.416969+00:00",
+        "status": "manual_run_complete"
+      }
+    },
+    {
+      "test_name": "Run Jobs Now",
+      "success": true,
+      "message": "Status: 200",
+      "response_data": {
+        "timestamp": "2026-02-13T15:46:30.962543+00:00",
+        "jobs": {
+          "nrd_rr_check": "completed",
+          "edr_deadlines": "completed",
+          "waiver_expiry": "completed",
+          "document_expiry": "completed",
+          "screening_refresh": "completed"
+        }
+      }
+    },
+    {
+      "test_name": "List QA Reviews",
+      "success": true,
+      "message": "Status: 200",
+      "response_data": []
+    },
+    {
+      "test_name": "Generate QA Sample",
+      "success": true,
+      "message": "Status: 200",
+      "response_data": {
+        "message": "No completed cases to sample",
+        "sample": []
+      }
+    },
+    {
+      "test_name": "Create QA Review",
+      "success": true,
+      "message": "Status: 200",
+      "response_data": {
+        "id": "0cb72362-e209-493f-8c39-b378230c6af2",
+        "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
+        "case_id": "a359cbff-224f-4c11-8ada-987f717aa346",
+        "qa_type": "first_line",
+        "sampled_at": "2026-02-13T15:46:31.510301+00:00",
+        "reviewer_id": "d8c706d0-41fe-4a32-9612-ad02fa01e4e9",
+        "reviewer_name": "Platform Admin",
+        "findings_json": [
+          "Test finding 1",
+          "Test finding 2"
+        ],
+        "severity": "low",
+        "remediation_required": false,
+        "remediation_notes": "",
+        "remediation_due_date": null,
+        "status": "open",
+        "closed_at": null,
+        "created_at": "2026-02-13T15:46:31.510310+00:00",
+        "updated_at": "2026-02-13T15:46:31.510312+00:00"
+      }
+    },
+    {
+      "test_name": "Update QA Review",
+      "success": true,
+      "message": "Status: 200",
+      "response_data": {
+        "id": "0cb72362-e209-493f-8c39-b378230c6af2",
+        "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
+        "case_id": "a359cbff-224f-4c11-8ada-987f717aa346",
+        "qa_type": "first_line",
+        "sampled_at": "2026-02-13T15:46:31.510301+00:00",
+        "reviewer_id": "d8c706d0-41fe-4a32-9612-ad02fa01e4e9",
+        "reviewer_name": "Platform Admin",
+        "findings_json": [
+          "Test finding 1",
+          "Test finding 2"
+        ],
+        "severity": "medium",
+        "remediation_required": false,
+        "remediation_notes": "",
+        "remediation_due_date": null,
+        "status": "closed",
+        "closed_at": "2026-02-13T15:46:31.670095+00:00",
+        "created_at": "2026-02-13T15:46:31.510310+00:00",
+        "updated_at": "2026-02-13T15:46:31.670105+00:00"
+      }
+    },
+    {
+      "test_name": "Get Governance Pack",
+      "success": true,
+      "message": "Status: 200",
+      "response_data": {
+        "period": "2026-01-14 to 2026-02-13",
+        "generated_at": "2026-02-13T15:46:31.830410+00:00",
+        "summary": {
+          "total_reviews": 1,
+          "by_type": {
+            "first_line": 1
+          },
+          "by_severity": {
+            "medium": 1
+          },
+          "by_status": {
+            "closed": 1
+          },
+          "remediation_required": 0
+        },
+        "trends": {
+          "current_month_reviews": 1,
+          "prior_month_reviews": 0,
+          "change": 1
+        },
+        "findings": [
+          {
+            "review_id": "0cb72362-e209-493f-8c39-b378230c6af2",
+            "case_id": "a359cbff-224f-4c11-8ada-987f717aa346",
+            "finding": "Test finding 1",
+            "severity": "medium"
+          },
+          {
+            "review_id": "0cb72362-e209-493f-8c39-b378230c6af2",
+            "case_id": "a359cbff-224f-4c11-8ada-987f717aa346",
+            "finding": "Test finding 2",
+            "severity": "medium"
+          }
+        ],
+        "remediation_tracker": []
+      }
+    },
+    {
+      "test_name": "List Video Ident Sessions",
+      "success": true,
+      "message": "Status: 200",
+      "response_data": []
+    },
+    {
+      "test_name": "Get Case for Video Ident",
+      "success": true,
+      "message": "Status: 200",
+      "response_data": {
+        "id": "a359cbff-224f-4c11-8ada-987f717aa346",
+        "case_ref": "DDY-20260213-64BADE",
+        "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
+        "case_type": "onboarding",
+        "status": "draft",
+        "risk_rating": "low",
+        "due_diligence_level": "cdd",
+        "jurisdiction": "EU",
+        "product_scope": "Corporate Banking",
+        "nrd_date": null,
+        "created_by": "d8c706d0-41fe-4a32-9612-ad02fa01e4e9",
+        "assigned_maker_id": null,
+        "assigned_checker_id": null,
+        "assigned_mlro_id": null,
+        "sla_json": {},
+        "narrative": "",
+        "narrative_sections": {},
+        "last_action_at": "2026-02-13T15:46:29.225217+00:00",
+        "created_at": "2026-02-13T15:46:29.225223+00:00",
+        "updated_at": "2026-02-13T15:46:29.682396+00:00",
+        "deleted": false,
+        "parties": [],
+        "requirements": [],
+        "documents": [],
+        "screening_runs": [
+          {
+            "id": "6b23fbea-0b2b-49e1-8a4e-357910194441",
+            "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
+            "case_id": "a359cbff-224f-4c11-8ada-987f717aa346",
+            "run_type": "sanctions",
+            "provider": "mock",
+            "started_at": "2026-02-13T15:46:29.507065+00:00",
+            "finished_at": "2026-02-13T15:46:29.513586+00:00",
+            "status": "completed",
+            "parameters_json": {
+              "parties_count": 0,
+              "run_type": "sanctions",
+              "hits_count": 0
+            },
+            "created_at": "2026-02-13T15:46:29.507075+00:00"
+          }
+        ],
+        "risk_assessments": [
+          {
+            "id": "e5b5c9d0-8da4-4cb7-aca0-3d71ed358d5d",
+            "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
+            "case_id": "a359cbff-224f-4c11-8ada-987f717aa346",
+            "methodology": "CRRM-like",
+            "inputs_json": {
+              "country": 2,
+              "industry": 2,
+              "product": 2,
+              "delivery_channel": 2,
+              "entity_type": 2
+            },
+            "per_se_flags_json": {
+              "pep": false,
+              "high_risk_country": false,
+              "gambling": false,
+              "bearer_shares": false,
+              "correspondent_banking": false,
+              "sanctions_nexus": false
+            },
+            "computed_score": 2.0,
+            "computed_rating": "low",
+            "final_rating": "low",
+            "due_diligence_level": "cdd",
+            "challenged": false,
+            "challenge_reason": null,
+            "approved_by_mlro": null,
+            "approved_at": null,
+            "created_at": "2026-02-13T15:46:29.681976+00:00"
+          }
+        ],
+        "approval_tasks": [],
+        "waivers": []
+      }
+    },
+    {
+      "test_name": "Video Ident Module Tests",
+      "success": false,
+      "message": "No parties in case for video ident session",
       "response_data": null
     }
   ]
