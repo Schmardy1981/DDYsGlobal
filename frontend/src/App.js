@@ -32,6 +32,7 @@ import VideoIdentPage from '@/pages/tenant/VideoIdentPage';
 // Customer Pages
 import CustomerLanding from '@/pages/customer/CustomerLanding';
 import CustomerDashboard from '@/pages/customer/CustomerDashboard';
+import CustomerInvitePage from '@/pages/customer/CustomerInvitePage';
 import Questionnaire from '@/pages/customer/Questionnaire';
 
 function ProtectedRoute({ children, portal }) {
