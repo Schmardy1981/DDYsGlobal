@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-02-13T15:20:16.130038",
+  "timestamp": "2026-02-13T15:25:48.094172",
   "total_tests": 16,
   "passed_tests": 15,
   "success_rate": "93.8%",
@@ -29,7 +29,7 @@
       "response_data": {
         "requires_mfa": false,
         "mfa_token": null,
-        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZDhjNzA2ZDAtNDFmZS00YTMyLTk2MTItYWQwMmZhMDFlNGU5IiwiZW1haWwiOiJhZG1pbkBkZHlzLmNvbSIsIm5hbWUiOiJQbGF0Zm9ybSBBZG1pbiIsImdsb2JhbF9yb2xlIjoiR0xPQkFMX1NVUEVSX0FETUlOIiwidGVuYW50X3JvbGVzIjpbXSwibWZhX3ZlcmlmaWVkIjp0cnVlLCJleHAiOjE3NzEwMzkyMTJ9.j8RqsCoUrVRx0L5wMabu_h6_atv4aYifjhbPKII-iT4",
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZDhjNzA2ZDAtNDFmZS00YTMyLTk2MTItYWQwMmZhMDFlNGU5IiwiZW1haWwiOiJhZG1pbkBkZHlzLmNvbSIsIm5hbWUiOiJQbGF0Zm9ybSBBZG1pbiIsImdsb2JhbF9yb2xlIjoiR0xPQkFMX1NVUEVSX0FETUlOIiwidGVuYW50X3JvbGVzIjpbXSwibWZhX3ZlcmlmaWVkIjp0cnVlLCJleHAiOjE3NzEwMzk1NDV9.SOiM1Tdg-ntY4qnqjUp6ntJMUgeH00a7pIapMu-M0XQ",
         "user": {
           "id": "d8c706d0-41fe-4a32-9612-ad02fa01e4e9",
           "email": "admin@ddys.com",
@@ -50,7 +50,7 @@
       "response_data": {
         "requires_mfa": false,
         "mfa_token": null,
-        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZWY3ZjgxOTQtN2IwZi00YzJmLWJjODctY2QwNmJkYjNlNDgyIiwiZW1haWwiOiJtYWtlckBkZHlzLmNvbSIsIm5hbWUiOiJTYXJhaCBNYWtlciIsImdsb2JhbF9yb2xlIjoiRERZU19SQ01fTUFLRVIiLCJ0ZW5hbnRfcm9sZXMiOlt7ImlkIjoiZjdlODk2YmMtZDFlZS00MTcwLThjYjYtMjBkZTg2NDE2ZjAxIiwidXNlcl9pZCI6ImVmN2Y4MTk0LTdiMGYtNGMyZi1iYzg3LWNkMDZiZGIzZTQ4MiIsInRlbmFudF9pZCI6IjgxODljMDU2LWE1YWUtNDk5Yi1iOGE1LWJiYmQzZmNjMTdiNyIsInJvbGUiOiJERFlTX1JDTV9NQUtFUiIsImFjdGl2ZSI6dHJ1ZSwiY3JlYXRlZF9hdCI6IjIwMjYtMDItMTNUMTU6MDc6NDUuMjg1MTM4KzAwOjAwIn1dLCJtZmFfdmVyaWZpZWQiOnRydWUsImV4cCI6MTc3MTAzOTIxM30.FemlEulaa3F_TKiptTQ8KReaDi-FovmJ0utfeIwX9CE",
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZWY3ZjgxOTQtN2IwZi00YzJmLWJjODctY2QwNmJkYjNlNDgyIiwiZW1haWwiOiJtYWtlckBkZHlzLmNvbSIsIm5hbWUiOiJTYXJhaCBNYWtlciIsImdsb2JhbF9yb2xlIjoiRERZU19SQ01fTUFLRVIiLCJ0ZW5hbnRfcm9sZXMiOlt7ImlkIjoiZjdlODk2YmMtZDFlZS00MTcwLThjYjYtMjBkZTg2NDE2ZjAxIiwidXNlcl9pZCI6ImVmN2Y4MTk0LTdiMGYtNGMyZi1iYzg3LWNkMDZiZGIzZTQ4MiIsInRlbmFudF9pZCI6IjgxODljMDU2LWE1YWUtNDk5Yi1iOGE1LWJiYmQzZmNjMTdiNyIsInJvbGUiOiJERFlTX1JDTV9NQUtFUiIsImFjdGl2ZSI6dHJ1ZSwiY3JlYXRlZF9hdCI6IjIwMjYtMDItMTNUMTU6MDc6NDUuMjg1MTM4KzAwOjAwIn1dLCJtZmFfdmVyaWZpZWQiOnRydWUsImV4cCI6MTc3MTAzOTU0NX0.peT8vUi4Lc6Rlo9xwDuKOq3FfeGkxoZd_Uc3DaTsoUA",
         "user": {
           "id": "ef7f8194-7b0f-4c2f-bc87-cd06bdb3e482",
           "email": "maker@ddys.com",
@@ -80,7 +80,7 @@
       "response_data": {
         "requires_mfa": false,
         "mfa_token": null,
-        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZTBjM2NjZDUtMzI4ZC00MzI1LWI5NWItNjhhMzM2YTFiMmZhIiwiZW1haWwiOiJjdXN0b21lckBleGFtcGxlLmNvbSIsIm5hbWUiOiJKb2huIEN1c3RvbWVyIiwiZ2xvYmFsX3JvbGUiOiJFTkRfQ1VTVE9NRVIiLCJ0ZW5hbnRfcm9sZXMiOltdLCJtZmFfdmVyaWZpZWQiOnRydWUsImV4cCI6MTc3MTAzOTIxM30.cm2SE8NwGKw8aEcEJCk3ZGYAlDylQBEs8sW7wayf6nY",
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZTBjM2NjZDUtMzI4ZC00MzI1LWI5NWItNjhhMzM2YTFiMmZhIiwiZW1haWwiOiJjdXN0b21lckBleGFtcGxlLmNvbSIsIm5hbWUiOiJKb2huIEN1c3RvbWVyIiwiZ2xvYmFsX3JvbGUiOiJFTkRfQ1VTVE9NRVIiLCJ0ZW5hbnRfcm9sZXMiOltdLCJtZmFfdmVyaWZpZWQiOnRydWUsImV4cCI6MTc3MTAzOTU0Nn0.GrvGM_2iL9lau3isCgPxr_P4ODNmI6tmhQS_jlLX54A",
         "user": {
           "id": "e0c3ccd5-328d-4325-b95b-68a336a1b2fa",
           "email": "customer@example.com",
@@ -123,6 +123,29 @@
       "message": "Status: 200",
       "response_data": [
         {
+          "id": "0a84d7eb-65fd-4582-8fba-3e661a7191c5",
+          "case_ref": "DDY-20260213-66EF8A",
+          "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
+          "case_type": "onboarding",
+          "status": "draft",
+          "risk_rating": "low",
+          "due_diligence_level": "cdd",
+          "jurisdiction": "EU",
+          "product_scope": "Corporate Banking",
+          "nrd_date": null,
+          "created_by": "d8c706d0-41fe-4a32-9612-ad02fa01e4e9",
+          "assigned_maker_id": null,
+          "assigned_checker_id": null,
+          "assigned_mlro_id": null,
+          "sla_json": {},
+          "narrative": "",
+          "narrative_sections": {},
+          "last_action_at": "2026-02-13T15:20:14.481767+00:00",
+          "created_at": "2026-02-13T15:20:14.481772+00:00",
+          "updated_at": "2026-02-13T15:20:14.977526+00:00",
+          "deleted": false
+        },
+        {
           "id": "8af96840-bfc2-4f9c-9b22-710351a5ec52",
           "case_ref": "DDY-20260213-DEMO01",
           "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
@@ -154,8 +177,8 @@
       "success": true,
       "message": "Status: 200",
       "response_data": {
-        "id": "0a84d7eb-65fd-4582-8fba-3e661a7191c5",
-        "case_ref": "DDY-20260213-66EF8A",
+        "id": "c77d4ab8-6ce5-4141-906d-9ed4e07fecbc",
+        "case_ref": "DDY-20260213-B92F4C",
         "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
         "case_type": "onboarding",
         "status": "draft",
@@ -171,9 +194,9 @@
         "sla_json": {},
         "narrative": "",
         "narrative_sections": {},
-        "last_action_at": "2026-02-13T15:20:14.481767+00:00",
-        "created_at": "2026-02-13T15:20:14.481772+00:00",
-        "updated_at": "2026-02-13T15:20:14.481774+00:00",
+        "last_action_at": "2026-02-13T15:25:46.790549+00:00",
+        "created_at": "2026-02-13T15:25:46.790554+00:00",
+        "updated_at": "2026-02-13T15:25:46.790556+00:00",
         "deleted": false
       }
     },
@@ -182,8 +205,8 @@
       "success": true,
       "message": "Status: 200",
       "response_data": {
-        "id": "0a84d7eb-65fd-4582-8fba-3e661a7191c5",
-        "case_ref": "DDY-20260213-66EF8A",
+        "id": "c77d4ab8-6ce5-4141-906d-9ed4e07fecbc",
+        "case_ref": "DDY-20260213-B92F4C",
         "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
         "case_type": "onboarding",
         "status": "draft",
@@ -199,9 +222,9 @@
         "sla_json": {},
         "narrative": "",
         "narrative_sections": {},
-        "last_action_at": "2026-02-13T15:20:14.481767+00:00",
-        "created_at": "2026-02-13T15:20:14.481772+00:00",
-        "updated_at": "2026-02-13T15:20:14.481774+00:00",
+        "last_action_at": "2026-02-13T15:25:46.790549+00:00",
+        "created_at": "2026-02-13T15:25:46.790554+00:00",
+        "updated_at": "2026-02-13T15:25:46.790556+00:00",
         "deleted": false,
         "parties": [],
         "requirements": [],
@@ -217,19 +240,19 @@
       "success": true,
       "message": "Status: 200",
       "response_data": {
-        "id": "935e2d09-8ef2-4b15-93ed-bcaca2f596e1",
+        "id": "2c7e32b2-b509-47bd-9f94-b04ab891e41c",
         "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
-        "case_id": "0a84d7eb-65fd-4582-8fba-3e661a7191c5",
+        "case_id": "c77d4ab8-6ce5-4141-906d-9ed4e07fecbc",
         "run_type": "sanctions",
         "provider": "mock",
-        "started_at": "2026-02-13T15:20:14.786504+00:00",
+        "started_at": "2026-02-13T15:25:47.118901+00:00",
         "finished_at": null,
         "status": "running",
         "parameters_json": {
           "parties_count": 0,
           "run_type": "sanctions"
         },
-        "created_at": "2026-02-13T15:20:14.786514+00:00",
+        "created_at": "2026-02-13T15:25:47.118912+00:00",
         "hits": []
       }
     },
@@ -238,9 +261,9 @@
       "success": true,
       "message": "Status: 200",
       "response_data": {
-        "id": "fe28530b-5483-4db9-9938-6b9877072379",
+        "id": "162e7b45-0010-45a5-a146-e78101acf115",
         "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
-        "case_id": "0a84d7eb-65fd-4582-8fba-3e661a7191c5",
+        "case_id": "c77d4ab8-6ce5-4141-906d-9ed4e07fecbc",
         "methodology": "CRRM-like",
         "inputs_json": {
           "country": 2,
@@ -265,7 +288,7 @@
         "challenge_reason": null,
         "approved_by_mlro": null,
         "approved_at": null,
-        "created_at": "2026-02-13T15:20:14.968171+00:00"
+        "created_at": "2026-02-13T15:25:47.278022+00:00"
       }
     },
     {
@@ -273,13 +296,13 @@
       "success": true,
       "message": "Status: 200",
       "response_data": {
-        "id": "67654269-ec29-4318-89f1-259663e0968f",
-        "case_id": "0a84d7eb-65fd-4582-8fba-3e661a7191c5",
+        "id": "b6736c11-3d63-450e-85b1-408b1a222c45",
+        "case_id": "c77d4ab8-6ce5-4141-906d-9ed4e07fecbc",
         "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
-        "filename": "KYC_Export_DDY-20260213-66EF8A_20260213_152015.zip",
-        "storage_path": "/app/backend/exports/KYC_Export_DDY-20260213-66EF8A_20260213_152015.zip",
-        "file_size": 3973,
-        "created_at": "2026-02-13T15:20:15.385897+00:00"
+        "filename": "KYC_Export_DDY-20260213-B92F4C_20260213_152547.zip",
+        "storage_path": "/app/backend/exports/KYC_Export_DDY-20260213-B92F4C_20260213_152547.zip",
+        "file_size": 3971,
+        "created_at": "2026-02-13T15:25:47.443919+00:00"
       }
     },
     {
@@ -296,7 +319,7 @@
       "success": true,
       "message": "Status: 200",
       "response_data": {
-        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNmNlZjgxNmEtY2Q1MC00OWU1LWFlYTEtM2U1MzU3MTMzYTgxIiwiZW1haWwiOiJ0ZXN0LWN1c3RvbWVyQGV4YW1wbGUuY29tIiwibmFtZSI6InRlc3QtY3VzdG9tZXIiLCJnbG9iYWxfcm9sZSI6IkVORF9DVVNUT01FUiIsInRlbmFudF9yb2xlcyI6W3sidGVuYW50X2lkIjoiODE4OWMwNTYtYTVhZS00OTliLWI4YTUtYmJiZDNmY2MxN2I3Iiwicm9sZSI6IkVORF9DVVNUT01FUiJ9XSwibWZhX3ZlcmlmaWVkIjp0cnVlLCJleHAiOjE3NzEwMzkyMTV9.fwtN4WVmYi6p3oY3mY2r1YoZQJw8tp_xuAv61n32XKE",
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNmNlZjgxNmEtY2Q1MC00OWU1LWFlYTEtM2U1MzU3MTMzYTgxIiwiZW1haWwiOiJ0ZXN0LWN1c3RvbWVyQGV4YW1wbGUuY29tIiwibmFtZSI6InRlc3QtY3VzdG9tZXIiLCJnbG9iYWxfcm9sZSI6IkVORF9DVVNUT01FUiIsInRlbmFudF9yb2xlcyI6W3sidGVuYW50X2lkIjoiODE4OWMwNTYtYTVhZS00OTliLWI4YTUtYmJiZDNmY2MxN2I3Iiwicm9sZSI6IkVORF9DVVNUT01FUiJ9XSwibWZhX3ZlcmlmaWVkIjp0cnVlLCJleHAiOjE3NzEwMzk1NDd9.YHeD0nq-Bvy06LVlaGUDKZftLqrFbnCGmHk0HdGiLFQ",
         "user": {
           "id": "6cef816a-cd50-49e5-aea1-3e5357133a81",
           "email": "test-customer@example.com",
@@ -321,13 +344,13 @@
       "message": "Status: 200",
       "response_data": {
         "total_tenants": 1,
-        "total_cases": 2,
+        "total_cases": 3,
         "tenant_stats": [
           {
             "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
             "tenant_name": "Demo Bank",
-            "total_cases": 2,
-            "active_cases": 2,
+            "total_cases": 3,
+            "active_cases": 3,
             "status": "active"
           }
         ],
