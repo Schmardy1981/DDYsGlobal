@@ -5,7 +5,10 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Users, FileText, Search, Shield, Scale, CheckCircle, Clock, Download, Play, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Users, FileText, Search, Shield, Scale, CheckCircle, Clock, Download, Play, AlertTriangle, Mail, UserPlus, Send, Bell } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import api from '@/api/client';
 
 const STATUS_COLORS = {
