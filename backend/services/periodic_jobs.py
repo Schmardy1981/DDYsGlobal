@@ -161,7 +161,10 @@ async def _check_edr_deadlines(db, now: datetime):
     """Monitor EDR alerts for SLA breaches."""
     open_alerts = await db.edr_alerts.find({
         "status": "open"
-    }, {"_id": 0}).to_list(5000)
+    }, {
+        "_id": 0, "id": 1, "alert_review_due_at": 1, "completion_due_at": 1,
+        "tenant_id": 1, "case_id": 1, "status": 1
+    }).to_list(5000)
 
     for alert in open_alerts:
         alert_review_due = alert.get("alert_review_due_at")
