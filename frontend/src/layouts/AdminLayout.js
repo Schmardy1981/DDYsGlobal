@@ -58,6 +58,9 @@ export default function AdminLayout() {
             <span className="text-xs text-[#64748B] font-['IBM_Plex_Sans']">Platform Admin Console</span>
           </div>
           <div className="flex items-center gap-3">
+            <Button variant="outline" size="sm" onClick={() => navigate('/workspace/cases')} className="text-xs" data-testid="switch-to-workspace">
+              <ArrowRightLeft size={14} className="mr-1" /> Workspace
+            </Button>
             <NotificationBell />
             <div className="text-right">
               <p className="text-sm font-medium leading-none">{user?.name}</p>
