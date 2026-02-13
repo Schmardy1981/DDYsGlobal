@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-02-13T15:47:19.062442",
-  "total_tests": 26,
-  "passed_tests": 23,
-  "success_rate": "88.5%",
+  "timestamp": "2026-02-13T15:47:57.389147",
+  "total_tests": 29,
+  "passed_tests": 28,
+  "success_rate": "96.6%",
   "results": [
     {
       "test_name": "Health Check",
@@ -13,7 +13,7 @@
         "service": "ddys-compliance",
         "periodic_jobs": {
           "key": "periodic_jobs",
-          "last_run": "2026-02-13T15:46:30.962543+00:00",
+          "last_run": "2026-02-13T15:47:17.419550+00:00",
           "next_run": "2026-02-13T16:40:40.416969+00:00",
           "status": "manual_run_complete"
         }
@@ -35,7 +35,7 @@
       "response_data": {
         "requires_mfa": false,
         "mfa_token": null,
-        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZDhjNzA2ZDAtNDFmZS00YTMyLTk2MTItYWQwMmZhMDFlNGU5IiwiZW1haWwiOiJhZG1pbkBkZHlzLmNvbSIsIm5hbWUiOiJQbGF0Zm9ybSBBZG1pbiIsImdsb2JhbF9yb2xlIjoiR0xPQkFMX1NVUEVSX0FETUlOIiwidGVuYW50X3JvbGVzIjpbXSwibWZhX3ZlcmlmaWVkIjp0cnVlLCJleHAiOjE3NzEwNDA4MzR9.AJq0hZjJpOtGGghEx-D_DP94bgquysZo1niH8Ycg_pE",
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZDhjNzA2ZDAtNDFmZS00YTMyLTk2MTItYWQwMmZhMDFlNGU5IiwiZW1haWwiOiJhZG1pbkBkZHlzLmNvbSIsIm5hbWUiOiJQbGF0Zm9ybSBBZG1pbiIsImdsb2JhbF9yb2xlIjoiR0xPQkFMX1NVUEVSX0FETUlOIiwidGVuYW50X3JvbGVzIjpbXSwibWZhX3ZlcmlmaWVkIjp0cnVlLCJleHAiOjE3NzEwNDA4NzJ9.Fr-KXZlOG31APTqGFAmnchvZV20VpwNiuaeQ86pGKQM",
         "user": {
           "id": "d8c706d0-41fe-4a32-9612-ad02fa01e4e9",
           "email": "admin@ddys.com",
@@ -56,7 +56,7 @@
       "response_data": {
         "requires_mfa": false,
         "mfa_token": null,
-        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZWY3ZjgxOTQtN2IwZi00YzJmLWJjODctY2QwNmJkYjNlNDgyIiwiZW1haWwiOiJtYWtlckBkZHlzLmNvbSIsIm5hbWUiOiJTYXJhaCBNYWtlciIsImdsb2JhbF9yb2xlIjoiRERZU19SQ01fTUFLRVIiLCJ0ZW5hbnRfcm9sZXMiOlt7ImlkIjoiZjdlODk2YmMtZDFlZS00MTcwLThjYjYtMjBkZTg2NDE2ZjAxIiwidXNlcl9pZCI6ImVmN2Y4MTk0LTdiMGYtNGMyZi1iYzg3LWNkMDZiZGIzZTQ4MiIsInRlbmFudF9pZCI6IjgxODljMDU2LWE1YWUtNDk5Yi1iOGE1LWJiYmQzZmNjMTdiNyIsInJvbGUiOiJERFlTX1JDTV9NQUtFUiIsImFjdGl2ZSI6dHJ1ZSwiY3JlYXRlZF9hdCI6IjIwMjYtMDItMTNUMTU6MDc6NDUuMjg1MTM4KzAwOjAwIn1dLCJtZmFfdmVyaWZpZWQiOnRydWUsImV4cCI6MTc3MTA0MDgzNH0.K36q_Xxk1NCiKrFegcw_tx0nbzsuVrDUURC_W801apA",
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZWY3ZjgxOTQtN2IwZi00YzJmLWJjODctY2QwNmJkYjNlNDgyIiwiZW1haWwiOiJtYWtlckBkZHlzLmNvbSIsIm5hbWUiOiJTYXJhaCBNYWtlciIsImdsb2JhbF9yb2xlIjoiRERZU19SQ01fTUFLRVIiLCJ0ZW5hbnRfcm9sZXMiOlt7ImlkIjoiZjdlODk2YmMtZDFlZS00MTcwLThjYjYtMjBkZTg2NDE2ZjAxIiwidXNlcl9pZCI6ImVmN2Y4MTk0LTdiMGYtNGMyZi1iYzg3LWNkMDZiZGIzZTQ4MiIsInRlbmFudF9pZCI6IjgxODljMDU2LWE1YWUtNDk5Yi1iOGE1LWJiYmQzZmNjMTdiNyIsInJvbGUiOiJERFlTX1JDTV9NQUtFUiIsImFjdGl2ZSI6dHJ1ZSwiY3JlYXRlZF9hdCI6IjIwMjYtMDItMTNUMTU6MDc6NDUuMjg1MTM4KzAwOjAwIn1dLCJtZmFfdmVyaWZpZWQiOnRydWUsImV4cCI6MTc3MTA0MDg3Mn0.3XMv1fzo0Xg9trbIrdJWuMo-1lWuMDwDv-HUMl-m-q4",
         "user": {
           "id": "ef7f8194-7b0f-4c2f-bc87-cd06bdb3e482",
           "email": "maker@ddys.com",
@@ -86,7 +86,7 @@
       "response_data": {
         "requires_mfa": false,
         "mfa_token": null,
-        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZTBjM2NjZDUtMzI4ZC00MzI1LWI5NWItNjhhMzM2YTFiMmZhIiwiZW1haWwiOiJjdXN0b21lckBleGFtcGxlLmNvbSIsIm5hbWUiOiJKb2huIEN1c3RvbWVyIiwiZ2xvYmFsX3JvbGUiOiJFTkRfQ1VTVE9NRVIiLCJ0ZW5hbnRfcm9sZXMiOltdLCJtZmFfdmVyaWZpZWQiOnRydWUsImV4cCI6MTc3MTA0MDgzNX0.oyQ-geQEaH34a2dvAd39ZH7yTOv-kWuhghYUQO7GVaY",
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZTBjM2NjZDUtMzI4ZC00MzI1LWI5NWItNjhhMzM2YTFiMmZhIiwiZW1haWwiOiJjdXN0b21lckBleGFtcGxlLmNvbSIsIm5hbWUiOiJKb2huIEN1c3RvbWVyIiwiZ2xvYmFsX3JvbGUiOiJFTkRfQ1VTVE9NRVIiLCJ0ZW5hbnRfcm9sZXMiOltdLCJtZmFfdmVyaWZpZWQiOnRydWUsImV4cCI6MTc3MTA0MDg3M30.tpXfvDD9ZtiiBe-Bh2_Zn3vOLZ3qa2G6cUyrgF03p6M",
         "user": {
           "id": "e0c3ccd5-328d-4325-b95b-68a336a1b2fa",
           "email": "customer@example.com",
@@ -128,6 +128,29 @@
       "success": true,
       "message": "Status: 200",
       "response_data": [
+        {
+          "id": "ff2a66c5-efeb-4b25-90a7-eff3b1bb9b1c",
+          "case_ref": "DDY-20260213-25F1F3",
+          "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
+          "case_type": "onboarding",
+          "status": "draft",
+          "risk_rating": "low",
+          "due_diligence_level": "cdd",
+          "jurisdiction": "EU",
+          "product_scope": "Corporate Banking",
+          "nrd_date": null,
+          "created_by": "d8c706d0-41fe-4a32-9612-ad02fa01e4e9",
+          "assigned_maker_id": null,
+          "assigned_checker_id": null,
+          "assigned_mlro_id": null,
+          "sla_json": {},
+          "narrative": "",
+          "narrative_sections": {},
+          "last_action_at": "2026-02-13T15:47:15.810958+00:00",
+          "created_at": "2026-02-13T15:47:15.810965+00:00",
+          "updated_at": "2026-02-13T15:47:16.280053+00:00",
+          "deleted": false
+        },
         {
           "id": "a359cbff-224f-4c11-8ada-987f717aa346",
           "case_ref": "DDY-20260213-64BADE",
@@ -229,8 +252,8 @@
       "success": true,
       "message": "Status: 200",
       "response_data": {
-        "id": "ff2a66c5-efeb-4b25-90a7-eff3b1bb9b1c",
-        "case_ref": "DDY-20260213-25F1F3",
+        "id": "0be8e2ab-f6e2-40f1-96d2-54cfcdc9f281",
+        "case_ref": "DDY-20260213-F6E5EF",
         "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
         "case_type": "onboarding",
         "status": "draft",
@@ -246,9 +269,9 @@
         "sla_json": {},
         "narrative": "",
         "narrative_sections": {},
-        "last_action_at": "2026-02-13T15:47:15.810958+00:00",
-        "created_at": "2026-02-13T15:47:15.810965+00:00",
-        "updated_at": "2026-02-13T15:47:15.810966+00:00",
+        "last_action_at": "2026-02-13T15:47:53.734281+00:00",
+        "created_at": "2026-02-13T15:47:53.734288+00:00",
+        "updated_at": "2026-02-13T15:47:53.734290+00:00",
         "deleted": false
       }
     },
@@ -257,8 +280,8 @@
       "success": true,
       "message": "Status: 200",
       "response_data": {
-        "id": "ff2a66c5-efeb-4b25-90a7-eff3b1bb9b1c",
-        "case_ref": "DDY-20260213-25F1F3",
+        "id": "0be8e2ab-f6e2-40f1-96d2-54cfcdc9f281",
+        "case_ref": "DDY-20260213-F6E5EF",
         "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
         "case_type": "onboarding",
         "status": "draft",
@@ -274,9 +297,9 @@
         "sla_json": {},
         "narrative": "",
         "narrative_sections": {},
-        "last_action_at": "2026-02-13T15:47:15.810958+00:00",
-        "created_at": "2026-02-13T15:47:15.810965+00:00",
-        "updated_at": "2026-02-13T15:47:15.810966+00:00",
+        "last_action_at": "2026-02-13T15:47:53.734281+00:00",
+        "created_at": "2026-02-13T15:47:53.734288+00:00",
+        "updated_at": "2026-02-13T15:47:53.734290+00:00",
         "deleted": false,
         "parties": [],
         "requirements": [],
@@ -292,19 +315,19 @@
       "success": true,
       "message": "Status: 200",
       "response_data": {
-        "id": "6331ac66-ed00-4e22-8a75-40e78fc0c3bb",
+        "id": "3eb4e45e-2681-4b0b-bf93-c7b0ec6ce881",
         "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
-        "case_id": "ff2a66c5-efeb-4b25-90a7-eff3b1bb9b1c",
+        "case_id": "0be8e2ab-f6e2-40f1-96d2-54cfcdc9f281",
         "run_type": "sanctions",
         "provider": "mock",
-        "started_at": "2026-02-13T15:47:16.122232+00:00",
+        "started_at": "2026-02-13T15:47:54.060387+00:00",
         "finished_at": null,
         "status": "running",
         "parameters_json": {
           "parties_count": 0,
           "run_type": "sanctions"
         },
-        "created_at": "2026-02-13T15:47:16.122240+00:00",
+        "created_at": "2026-02-13T15:47:54.060397+00:00",
         "hits": []
       }
     },
@@ -313,9 +336,9 @@
       "success": true,
       "message": "Status: 200",
       "response_data": {
-        "id": "688712cb-473c-4a55-b289-57b4d4de6a62",
+        "id": "d85d01cb-1af1-4856-b7c3-7898e97ed672",
         "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
-        "case_id": "ff2a66c5-efeb-4b25-90a7-eff3b1bb9b1c",
+        "case_id": "0be8e2ab-f6e2-40f1-96d2-54cfcdc9f281",
         "methodology": "CRRM-like",
         "inputs_json": {
           "country": 2,
@@ -340,7 +363,7 @@
         "challenge_reason": null,
         "approved_by_mlro": null,
         "approved_at": null,
-        "created_at": "2026-02-13T15:47:16.279688+00:00"
+        "created_at": "2026-02-13T15:47:54.268045+00:00"
       }
     },
     {
@@ -348,13 +371,13 @@
       "success": true,
       "message": "Status: 200",
       "response_data": {
-        "id": "0b0a6920-b669-42d8-8c70-0f4da373bebb",
-        "case_id": "ff2a66c5-efeb-4b25-90a7-eff3b1bb9b1c",
+        "id": "75cffc6e-f61c-4271-8b85-f6407bc4b7df",
+        "case_id": "0be8e2ab-f6e2-40f1-96d2-54cfcdc9f281",
         "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
-        "filename": "KYC_Export_DDY-20260213-25F1F3_20260213_154716.zip",
-        "storage_path": "/app/backend/exports/KYC_Export_DDY-20260213-25F1F3_20260213_154716.zip",
-        "file_size": 3970,
-        "created_at": "2026-02-13T15:47:16.452640+00:00"
+        "filename": "KYC_Export_DDY-20260213-F6E5EF_20260213_154754.zip",
+        "storage_path": "/app/backend/exports/KYC_Export_DDY-20260213-F6E5EF_20260213_154754.zip",
+        "file_size": 3967,
+        "created_at": "2026-02-13T15:47:54.459175+00:00"
       }
     },
     {
@@ -371,7 +394,7 @@
       "success": true,
       "message": "Status: 200",
       "response_data": {
-        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNmNlZjgxNmEtY2Q1MC00OWU1LWFlYTEtM2U1MzU3MTMzYTgxIiwiZW1haWwiOiJ0ZXN0LWN1c3RvbWVyQGV4YW1wbGUuY29tIiwibmFtZSI6InRlc3QtY3VzdG9tZXIiLCJnbG9iYWxfcm9sZSI6IkVORF9DVVNUT01FUiIsInRlbmFudF9yb2xlcyI6W3sidGVuYW50X2lkIjoiODE4OWMwNTYtYTVhZS00OTliLWI4YTUtYmJiZDNmY2MxN2I3Iiwicm9sZSI6IkVORF9DVVNUT01FUiJ9XSwibWZhX3ZlcmlmaWVkIjp0cnVlLCJleHAiOjE3NzEwNDA4MzZ9.KK_nToK_Gb7hOybbd069ZziQPu9D9Q6LSfcCy9xhuBc",
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNmNlZjgxNmEtY2Q1MC00OWU1LWFlYTEtM2U1MzU3MTMzYTgxIiwiZW1haWwiOiJ0ZXN0LWN1c3RvbWVyQGV4YW1wbGUuY29tIiwibmFtZSI6InRlc3QtY3VzdG9tZXIiLCJnbG9iYWxfcm9sZSI6IkVORF9DVVNUT01FUiIsInRlbmFudF9yb2xlcyI6W3sidGVuYW50X2lkIjoiODE4OWMwNTYtYTVhZS00OTliLWI4YTUtYmJiZDNmY2MxN2I3Iiwicm9sZSI6IkVORF9DVVNUT01FUiJ9XSwibWZhX3ZlcmlmaWVkIjp0cnVlLCJleHAiOjE3NzEwNDA4NzR9.0_JA30hwHkaPzZzmknARU4XSWCNlhEOt7BR_qx8XN_g",
         "user": {
           "id": "6cef816a-cd50-49e5-aea1-3e5357133a81",
           "email": "test-customer@example.com",
@@ -396,13 +419,13 @@
       "message": "Status: 200",
       "response_data": {
         "total_tenants": 1,
-        "total_cases": 5,
+        "total_cases": 6,
         "tenant_stats": [
           {
             "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
             "tenant_name": "Demo Bank",
-            "total_cases": 5,
-            "active_cases": 5,
+            "total_cases": 6,
+            "active_cases": 6,
             "status": "active"
           }
         ],
@@ -424,7 +447,7 @@
       "message": "Status: 200",
       "response_data": {
         "key": "periodic_jobs",
-        "last_run": "2026-02-13T15:46:30.962543+00:00",
+        "last_run": "2026-02-13T15:47:17.419550+00:00",
         "next_run": "2026-02-13T16:40:40.416969+00:00",
         "status": "manual_run_complete"
       }
@@ -434,7 +457,7 @@
       "success": true,
       "message": "Status: 200",
       "response_data": {
-        "timestamp": "2026-02-13T15:47:17.419550+00:00",
+        "timestamp": "2026-02-13T15:47:55.441694+00:00",
         "jobs": {
           "nrd_rr_check": "completed",
           "edr_deadlines": "completed",
@@ -449,6 +472,27 @@
       "success": true,
       "message": "Status: 200",
       "response_data": [
+        {
+          "id": "28611ae7-84ae-4826-8f9c-216cfbe3c307",
+          "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
+          "case_id": "ff2a66c5-efeb-4b25-90a7-eff3b1bb9b1c",
+          "qa_type": "first_line",
+          "sampled_at": "2026-02-13T15:47:17.934407+00:00",
+          "reviewer_id": "d8c706d0-41fe-4a32-9612-ad02fa01e4e9",
+          "reviewer_name": "Platform Admin",
+          "findings_json": [
+            "Test finding 1",
+            "Test finding 2"
+          ],
+          "severity": "medium",
+          "remediation_required": false,
+          "remediation_notes": "",
+          "remediation_due_date": null,
+          "status": "closed",
+          "closed_at": "2026-02-13T15:47:18.651083+00:00",
+          "created_at": "2026-02-13T15:47:17.934415+00:00",
+          "updated_at": "2026-02-13T15:47:18.651093+00:00"
+        },
         {
           "id": "0cb72362-e209-493f-8c39-b378230c6af2",
           "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
@@ -486,11 +530,11 @@
       "success": true,
       "message": "Status: 200",
       "response_data": {
-        "id": "28611ae7-84ae-4826-8f9c-216cfbe3c307",
+        "id": "f716d1b3-18c8-45e0-8893-d7556a5102f2",
         "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
-        "case_id": "ff2a66c5-efeb-4b25-90a7-eff3b1bb9b1c",
+        "case_id": "0be8e2ab-f6e2-40f1-96d2-54cfcdc9f281",
         "qa_type": "first_line",
-        "sampled_at": "2026-02-13T15:47:17.934407+00:00",
+        "sampled_at": "2026-02-13T15:47:56.012525+00:00",
         "reviewer_id": "d8c706d0-41fe-4a32-9612-ad02fa01e4e9",
         "reviewer_name": "Platform Admin",
         "findings_json": [
@@ -503,8 +547,8 @@
         "remediation_due_date": null,
         "status": "open",
         "closed_at": null,
-        "created_at": "2026-02-13T15:47:17.934415+00:00",
-        "updated_at": "2026-02-13T15:47:17.934417+00:00"
+        "created_at": "2026-02-13T15:47:56.012534+00:00",
+        "updated_at": "2026-02-13T15:47:56.012536+00:00"
       }
     },
     {
@@ -512,11 +556,11 @@
       "success": true,
       "message": "Status: 200",
       "response_data": {
-        "id": "28611ae7-84ae-4826-8f9c-216cfbe3c307",
+        "id": "f716d1b3-18c8-45e0-8893-d7556a5102f2",
         "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
-        "case_id": "ff2a66c5-efeb-4b25-90a7-eff3b1bb9b1c",
+        "case_id": "0be8e2ab-f6e2-40f1-96d2-54cfcdc9f281",
         "qa_type": "first_line",
-        "sampled_at": "2026-02-13T15:47:17.934407+00:00",
+        "sampled_at": "2026-02-13T15:47:56.012525+00:00",
         "reviewer_id": "d8c706d0-41fe-4a32-9612-ad02fa01e4e9",
         "reviewer_name": "Platform Admin",
         "findings_json": [
@@ -528,9 +572,9 @@
         "remediation_notes": "",
         "remediation_due_date": null,
         "status": "closed",
-        "closed_at": "2026-02-13T15:47:18.651083+00:00",
-        "created_at": "2026-02-13T15:47:17.934415+00:00",
-        "updated_at": "2026-02-13T15:47:18.651093+00:00"
+        "closed_at": "2026-02-13T15:47:56.235334+00:00",
+        "created_at": "2026-02-13T15:47:56.012534+00:00",
+        "updated_at": "2026-02-13T15:47:56.235344+00:00"
       }
     },
     {
@@ -539,24 +583,24 @@
       "message": "Status: 200",
       "response_data": {
         "period": "2026-01-14 to 2026-02-13",
-        "generated_at": "2026-02-13T15:47:18.795101+00:00",
+        "generated_at": "2026-02-13T15:47:56.350467+00:00",
         "summary": {
-          "total_reviews": 2,
+          "total_reviews": 3,
           "by_type": {
-            "first_line": 2
+            "first_line": 3
           },
           "by_severity": {
-            "medium": 2
+            "medium": 3
           },
           "by_status": {
-            "closed": 2
+            "closed": 3
           },
           "remediation_required": 0
         },
         "trends": {
-          "current_month_reviews": 2,
+          "current_month_reviews": 3,
           "prior_month_reviews": 0,
-          "change": 2
+          "change": 3
         },
         "findings": [
           {
@@ -582,6 +626,18 @@
             "case_id": "ff2a66c5-efeb-4b25-90a7-eff3b1bb9b1c",
             "finding": "Test finding 2",
             "severity": "medium"
+          },
+          {
+            "review_id": "f716d1b3-18c8-45e0-8893-d7556a5102f2",
+            "case_id": "0be8e2ab-f6e2-40f1-96d2-54cfcdc9f281",
+            "finding": "Test finding 1",
+            "severity": "medium"
+          },
+          {
+            "review_id": "f716d1b3-18c8-45e0-8893-d7556a5102f2",
+            "case_id": "0be8e2ab-f6e2-40f1-96d2-54cfcdc9f281",
+            "finding": "Test finding 2",
+            "severity": "medium"
           }
         ],
         "remediation_tracker": []
@@ -595,15 +651,151 @@
     },
     {
       "test_name": "Create Party for Video Ident",
-      "success": false,
-      "message": "Expected 200, got 404 - Not Found",
-      "response_data": null
+      "success": true,
+      "message": "Status: 200",
+      "response_data": {
+        "id": "6aafcfbf-4d8f-4e6a-8f90-f97d7a13ae3c",
+        "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
+        "case_id": "0be8e2ab-f6e2-40f1-96d2-54cfcdc9f281",
+        "party_type": "natural_person",
+        "role_in_case": "applicant",
+        "first_name": "John",
+        "last_name": "Doe",
+        "legal_name": "",
+        "dob": null,
+        "nationality": "GB",
+        "addresses_json": {},
+        "identifiers_json": {},
+        "ownership_percent": null,
+        "control_flags_json": {},
+        "created_at": "2026-02-13T15:47:56.673128+00:00",
+        "updated_at": "2026-02-13T15:47:56.673137+00:00",
+        "deleted": false
+      }
     },
     {
-      "test_name": "Video Ident Module Tests",
-      "success": false,
-      "message": "Failed to create party for video ident test",
-      "response_data": null
+      "test_name": "Create Video Ident Session",
+      "success": true,
+      "message": "Status: 200",
+      "response_data": {
+        "id": "ea83d5ba-7cf6-4c0d-8b8f-b7c46609a0bf",
+        "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
+        "case_id": "0be8e2ab-f6e2-40f1-96d2-54cfcdc9f281",
+        "party_id": "6aafcfbf-4d8f-4e6a-8f90-f97d7a13ae3c",
+        "party_name": "John Doe",
+        "scheduled_at": "2024-03-01T14:00:00Z",
+        "started_at": null,
+        "ended_at": null,
+        "agent_user_id": null,
+        "provider": "internal_webrtc",
+        "room_id": "2815f97d-2dd",
+        "customer_token": "4159a469-9219-4d31-979a-a8405348f3db",
+        "agent_token": "ea7ac2ef-ae1d-4d13-afb2-931ca6a59607",
+        "meeting_url": "/video-room/2815f97d-2dd",
+        "recording_storage_path": null,
+        "liveness_score": null,
+        "deepfake_score": null,
+        "outcome": null,
+        "notes": "",
+        "status": "scheduled",
+        "created_at": "2026-02-13T15:47:56.877338+00:00",
+        "updated_at": "2026-02-13T15:47:56.877348+00:00"
+      }
+    },
+    {
+      "test_name": "Get Video Ident Session",
+      "success": true,
+      "message": "Status: 200",
+      "response_data": {
+        "id": "ea83d5ba-7cf6-4c0d-8b8f-b7c46609a0bf",
+        "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
+        "case_id": "0be8e2ab-f6e2-40f1-96d2-54cfcdc9f281",
+        "party_id": "6aafcfbf-4d8f-4e6a-8f90-f97d7a13ae3c",
+        "party_name": "John Doe",
+        "scheduled_at": "2024-03-01T14:00:00Z",
+        "started_at": null,
+        "ended_at": null,
+        "agent_user_id": null,
+        "provider": "internal_webrtc",
+        "room_id": "2815f97d-2dd",
+        "customer_token": "4159a469-9219-4d31-979a-a8405348f3db",
+        "agent_token": "ea7ac2ef-ae1d-4d13-afb2-931ca6a59607",
+        "meeting_url": "/video-room/2815f97d-2dd",
+        "recording_storage_path": null,
+        "liveness_score": null,
+        "deepfake_score": null,
+        "outcome": null,
+        "notes": "",
+        "status": "scheduled",
+        "created_at": "2026-02-13T15:47:56.877338+00:00",
+        "updated_at": "2026-02-13T15:47:56.877348+00:00"
+      }
+    },
+    {
+      "test_name": "Join Video Ident Session",
+      "success": true,
+      "message": "Status: 200",
+      "response_data": {
+        "session": {
+          "id": "ea83d5ba-7cf6-4c0d-8b8f-b7c46609a0bf",
+          "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
+          "case_id": "0be8e2ab-f6e2-40f1-96d2-54cfcdc9f281",
+          "party_id": "6aafcfbf-4d8f-4e6a-8f90-f97d7a13ae3c",
+          "party_name": "John Doe",
+          "scheduled_at": "2024-03-01T14:00:00Z",
+          "started_at": "2026-02-13T15:47:57.249667+00:00",
+          "ended_at": null,
+          "agent_user_id": "d8c706d0-41fe-4a32-9612-ad02fa01e4e9",
+          "provider": "internal_webrtc",
+          "room_id": "2815f97d-2dd",
+          "customer_token": "4159a469-9219-4d31-979a-a8405348f3db",
+          "agent_token": "ea7ac2ef-ae1d-4d13-afb2-931ca6a59607",
+          "meeting_url": "/video-room/2815f97d-2dd",
+          "recording_storage_path": null,
+          "liveness_score": null,
+          "deepfake_score": null,
+          "outcome": null,
+          "notes": "",
+          "status": "in_progress",
+          "created_at": "2026-02-13T15:47:56.877338+00:00",
+          "updated_at": "2026-02-13T15:47:57.249676+00:00"
+        },
+        "role": "agent",
+        "room_id": "2815f97d-2dd"
+      }
+    },
+    {
+      "test_name": "Complete Video Ident Session",
+      "success": true,
+      "message": "Status: 200",
+      "response_data": {
+        "id": "ea83d5ba-7cf6-4c0d-8b8f-b7c46609a0bf",
+        "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
+        "case_id": "0be8e2ab-f6e2-40f1-96d2-54cfcdc9f281",
+        "party_id": "6aafcfbf-4d8f-4e6a-8f90-f97d7a13ae3c",
+        "party_name": "John Doe",
+        "scheduled_at": "2024-03-01T14:00:00Z",
+        "started_at": "2026-02-13T15:47:57.249667+00:00",
+        "ended_at": "2026-02-13T15:47:57.370342+00:00",
+        "agent_user_id": "d8c706d0-41fe-4a32-9612-ad02fa01e4e9",
+        "provider": "internal_webrtc",
+        "room_id": "2815f97d-2dd",
+        "customer_token": "4159a469-9219-4d31-979a-a8405348f3db",
+        "agent_token": "ea7ac2ef-ae1d-4d13-afb2-931ca6a59607",
+        "meeting_url": "/video-room/2815f97d-2dd",
+        "recording_storage_path": null,
+        "liveness_score": 0.85,
+        "deepfake_score": 0.05,
+        "outcome": "pass",
+        "notes": "Test completion",
+        "status": "completed",
+        "created_at": "2026-02-13T15:47:56.877338+00:00",
+        "updated_at": "2026-02-13T15:47:57.370351+00:00",
+        "deepfake_pass": true,
+        "document_match": true,
+        "identity_confirmed": true,
+        "liveness_pass": true
+      }
     }
   ]
 }
