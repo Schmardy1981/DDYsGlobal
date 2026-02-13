@@ -85,24 +85,22 @@ Build a production-ready, multi-tenant "Compliance as a Service" platform for KY
 - Workspace: Video Ident page (schedule, join, complete sessions)
 
 ## Prioritized Backlog
-### P0 (Next Phase)
-- Video Ident with WebRTC (agent + customer)
-- Deepfake/Liveness mock adapter
-- Regular Review (RR) auto-generation from NRD
-- EDR automation jobs
-
-### P1
-- QA Module (sampling, first/second line reviews, governance council)
+### P0 (Next)
+- Real WebRTC video room (currently session management only - no actual video stream)
 - Email integration (SendGrid/Resend with API key in admin panel)
 - Full maker-checker narrative editor (rich text)
 - Tenant branding (white-label customer portal)
 
-### P2
+### P1
 - Real screening provider integration (DIDIT adapter)
+- SSO/SAML integration for tenant banks
 - Bulk import/export for legacy KYC files
-- SSO/SAML integration
 - Data residency controls per tenant
+
+### P2
 - In-app help page ("How to operate DDYs")
+- Risk Score Trend analytics over time
+- Training acknowledgement for KOS updates
 
 ## Demo Credentials
 | Email | Password | Role |
