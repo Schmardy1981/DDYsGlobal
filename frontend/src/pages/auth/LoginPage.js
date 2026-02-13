@@ -147,6 +147,29 @@ export default function LoginPage() {
                 <Button type="submit" className="w-full bg-[#0F172A] hover:bg-[#1E293B]" disabled={loading} data-testid="login-submit">
                   {loading ? 'Signing in...' : 'Sign In'}
                 </Button>
+
+                {/* Demo credentials */}
+                <div className="p-3 bg-[#F1F5F9] border border-[#E2E8F0] rounded-md">
+                  <p className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider mb-2">Demo Accounts</p>
+                  <div className="space-y-1">
+                    {[
+                      ['admin@ddys.com', 'Admin123!', 'Super Admin'],
+                      ['maker@ddys.com', 'Maker123!', 'RCM Maker'],
+                      ['mlro@demobank.com', 'MLRO123!', 'MLRO'],
+                    ].map(([e, p, r]) => (
+                      <button
+                        key={e}
+                        type="button"
+                        onClick={() => { setEmail(e); setPassword(p); setError(''); }}
+                        className="w-full flex items-center justify-between text-left px-2 py-1.5 rounded hover:bg-white transition-colors text-xs"
+                        data-testid={`demo-${r.toLowerCase().replace(/ /g, '-')}`}
+                      >
+                        <span className="font-['JetBrains_Mono'] text-[#0F172A]">{e}</span>
+                        <span className="text-[#64748B]">{r}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </form>
             ) : (
               <form onSubmit={handleMfa} className="space-y-4">
