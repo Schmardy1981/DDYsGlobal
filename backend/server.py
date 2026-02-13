@@ -53,6 +53,8 @@ from routes.admin import router as admin_router
 from routes.customer_portal import router as customer_router
 from routes.notifications import router as notifications_router
 from routes.edr import router as edr_router
+from routes.qa import router as qa_router
+from routes.video_ident import router as video_ident_router
 
 app.include_router(auth_router)
 app.include_router(tenants_router)
