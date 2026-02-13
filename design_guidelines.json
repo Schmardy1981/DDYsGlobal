@@ -1,0 +1,162 @@
+{
+  "design_system": {
+    "identity": {
+      "name": "DDYs - Compliance as a Service",
+      "tone": "Authoritative, Precise, Transparent, Efficient",
+      "aesthetic": "Bloomberg meets modern SaaS. High density, low noise, functional beauty.",
+      "theme_strategy": "light_only"
+    },
+    "typography": {
+      "font_family": {
+        "headings": "IBM Plex Sans, sans-serif",
+        "body": "Inter, sans-serif",
+        "mono": "JetBrains Mono, monospace"
+      },
+      "scaling": {
+        "h1": "text-3xl font-semibold tracking-tight",
+        "h2": "text-2xl font-medium tracking-tight",
+        "h3": "text-xl font-medium",
+        "body": "text-sm leading-normal",
+        "small": "text-xs leading-tight text-muted-foreground",
+        "label": "text-[11px] uppercase tracking-wider font-semibold text-muted-foreground"
+      },
+      "imports": [
+        "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap",
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap",
+        "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
+      ]
+    },
+    "colors": {
+      "palette": {
+        "primary": {
+          "DEFAULT": "#0F172A", 
+          "foreground": "#F8FAFC"
+        },
+        "secondary": {
+          "DEFAULT": "#F1F5F9",
+          "foreground": "#0F172A"
+        },
+        "accent": {
+          "DEFAULT": "#F8FAFC",
+          "foreground": "#0F172A"
+        },
+        "muted": {
+          "DEFAULT": "#F1F5F9",
+          "foreground": "#64748B"
+        },
+        "background": "#FFFFFF",
+        "surface": "#F8FAFC",
+        "border": "#E2E8F0"
+      },
+      "semantic": {
+        "risk_high": "#DC2626",
+        "risk_medium": "#D97706",
+        "risk_low": "#16A34A",
+        "info": "#2563EB",
+        "neutral": "#64748B"
+      }
+    },
+    "layout": {
+      "grid_system": "Bento Mode B (High Density)",
+      "spacing": {
+        "container_padding": "p-6 md:p-8",
+        "section_gap": "gap-6",
+        "component_gap": "gap-3",
+        "dense_padding": "px-3 py-1.5"
+      },
+      "border_radius": {
+        "default": "rounded-sm",
+        "card": "rounded-md",
+        "button": "rounded-md"
+      },
+      "containers": {
+        "card_style": "bg-white border border-border shadow-sm",
+        "dashboard_panel": "h-full flex flex-col bg-white border border-border rounded-md overflow-hidden",
+        "main_content": "flex-1 overflow-y-auto bg-surface p-6"
+      }
+    },
+    "components": {
+      "buttons": {
+        "primary": "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm h-9 px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+        "secondary": "bg-white text-secondary-foreground border border-input shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 text-sm font-medium transition-colors",
+        "ghost": "hover:bg-accent hover:text-accent-foreground h-9 px-4 text-sm font-medium transition-colors",
+        "destructive": "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm h-9 px-4 text-sm font-medium transition-colors"
+      },
+      "inputs": {
+        "default": "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+      },
+      "cards": {
+        "wrapper": "rounded-lg border bg-card text-card-foreground shadow-sm",
+        "header": "flex flex-col space-y-1.5 p-6",
+        "content": "p-6 pt-0"
+      },
+      "tables": {
+        "wrapper": "relative w-full overflow-auto border rounded-md bg-white",
+        "header_row": "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
+        "header_cell": "h-10 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0",
+        "body_row": "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
+        "cell": "p-4 align-middle [&:has([role=checkbox])]:pr-0 text-sm"
+      },
+      "badges": {
+        "default": "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+        "outline": "text-foreground",
+        "risk_high": "border-transparent bg-red-100 text-red-700 hover:bg-red-200",
+        "risk_medium": "border-transparent bg-amber-100 text-amber-700 hover:bg-amber-200",
+        "risk_low": "border-transparent bg-green-100 text-green-700 hover:bg-green-200"
+      }
+    },
+    "motion": {
+      "strategy": "Minimal and snappy. No prolonged transitions.",
+      "transitions": {
+        "default": "transition-all duration-200 ease-in-out",
+        "hover": "transition-colors duration-150 ease-out"
+      }
+    },
+    "visual_assets": {
+      "icons": {
+        "library": "lucide-react",
+        "style": "stroke-width={1.5} size={16}"
+      },
+      "images": {
+        "logo_placeholder": "https://placehold.co/40x40/0F172A/FFF?text=DDY",
+        "user_avatar": "https://images.unsplash.com/photo-1689600944138-da3b150d9cb8?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzB8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBidXNpbmVzcyUyMGhlYWRzaG90JTIwcG9ydHJhaXR8ZW58MHx8fHwxNzcwOTk0MjQ2fDA&ixlib=rb-4.1.0&q=85"
+      }
+    },
+    "accessibility": {
+      "contrast": "APCA preferred. Text-muted-foreground must be readable.",
+      "focus_states": "Visible focus rings on all interactive elements.",
+      "aria": "All icon-only buttons must have aria-label."
+    }
+  },
+  "universal_guidelines": [
+    "Design for data density: Use tight spacing and smaller fonts (text-sm, text-xs) where appropriate to show more data without scrolling.",
+    "Use 'IBM Plex Sans' for all headings and 'Inter' for body text. 'JetBrains Mono' for IDs, Keys, and code snippets.",
+    "Avoid gradients. Use solid colors and subtle 1px borders for separation.",
+    "Use 'sonner' for all toast notifications.",
+    "Never use generic HTML tables; use Shadcn Table component.",
+    "All interactive elements must have a data-testid attribute.",
+    "Do not use emojis. Use Lucide icons for visual cues.",
+    "Light theme only. No dark mode toggle unless requested.",
+    "Status indicators (Badges) are critical for risk assessments."
+  ],
+  "page_specifics": {
+    "login": {
+      "layout": "Split screen. Left: Branding/Marketing (Clean). Right: Login Form.",
+      "elements": ["Email Input", "OTP Input", "Google Auth Toggle", "Secure Badge"]
+    },
+    "platform_admin": {
+      "layout": "Sidebar Navigation + Main Content Area",
+      "key_features": ["Tenant Table (Data Dense)", "System Health Metrics (Simple Cards)", "Global Settings Form"]
+    },
+    "tenant_workspace": {
+      "layout": "Sidebar + Topbar + Content",
+      "dashboard_widgets": ["Case Pipeline (Kanban or List)", "Risk Distribution (Bar Chart)", "Overdue Items (Alert List)"],
+      "case_detail": "Tabbed Interface. Left Col: Customer Profile (Sticky). Right Col: Tabs (Documents, Screening, Risk, etc.)"
+    },
+    "end_customer_portal": {
+      "layout": "Centered Focus Mode (Wizard)",
+      "steps": ["Welcome", "Data Entry", "Doc Upload", "Review", "Success"],
+      "tone": "Reassuring, Simple, guided."
+    }
+  }
+}
