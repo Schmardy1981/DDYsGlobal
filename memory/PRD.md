@@ -55,6 +55,35 @@ Build a production-ready, multi-tenant "Compliance as a Service" platform for KY
 - **Tenant Workspace**: Cases Pipeline (filterable), Case Detail (8 tabs), Screening Queue, Waivers, EDR Alerts, MI Dashboard, Settings
 - **Customer Portal**: Bank selection + OTP, Dashboard checklist, Questionnaire wizard, Document upload
 
+## What's Been Implemented (Phase 2 - Feb 2026)
+### Periodic Background Jobs
+- Regular Review (RR) auto-generation when NRD approaches (High: 12mo, Medium: 24mo, Low: 60mo, triggers 60 days early)
+- EDR deadline monitoring (28-day review SLA, 90-day completion SLA, auto-restrict on breach, MLRO escalation)
+- Waiver expiry monitoring (alerts at 30/14/7/1 days, auto-expire, auto-restrict, revert waived requirements)
+- Document expiry monitoring (flag expired docs, create EDR alerts)
+- Ongoing screening refresh (weekly re-screening of active clients)
+- Manual trigger via admin "Run All Jobs Now" button
+- Runs every hour automatically
+
+### Video Identification
+- Create/schedule video ident sessions per party
+- Agent join and complete workflow
+- Mock liveness/deepfake scoring with policy thresholds (liveness >= 0.70, deepfake <= 0.30)
+- Auto-escalation to MLRO on suspected deepfake
+- Session tracking (scheduled, in_progress, completed)
+
+### QA Module
+- Risk-weighted + random sampling (default 5% of completed cases monthly)
+- First line and second line QA reviews
+- Manual review creation with findings, severity, remediation tracking
+- Governance Council pack (monthly metrics, trends, findings summary, remediation tracker)
+- Open/close review lifecycle
+
+### New Frontend Pages
+- Admin: Periodic Jobs page (5 job cards with status, Run All Now button)
+- Workspace: QA page (Reviews tab + Governance Pack tab)
+- Workspace: Video Ident page (schedule, join, complete sessions)
+
 ## Prioritized Backlog
 ### P0 (Next Phase)
 - Video Ident with WebRTC (agent + customer)
