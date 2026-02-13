@@ -55,6 +55,7 @@ from routes.notifications import router as notifications_router
 from routes.edr import router as edr_router
 from routes.qa import router as qa_router
 from routes.video_ident import router as video_ident_router
+from routes.reminders import router as reminders_router
 
 app.include_router(auth_router)
 app.include_router(tenants_router)
