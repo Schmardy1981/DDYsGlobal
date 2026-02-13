@@ -306,7 +306,10 @@ async def _check_document_expiry(db, now: datetime):
     """Monitor document expiry dates."""
     docs_with_expiry = await db.documents.find({
         "expiry_date": {"$ne": None}
-    }, {"_id": 0}).to_list(5000)
+    }, {
+        "_id": 0, "id": 1, "expiry_date": 1, "status": 1,
+        "requirement_item_id": 1, "case_id": 1, "tenant_id": 1, "original_filename": 1
+    }).to_list(5000)
 
     for doc in docs_with_expiry:
         expiry_str = doc.get("expiry_date")
