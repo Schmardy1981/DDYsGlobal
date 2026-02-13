@@ -1,0 +1,347 @@
+{
+  "timestamp": "2026-02-13T15:20:16.130038",
+  "total_tests": 16,
+  "passed_tests": 15,
+  "success_rate": "93.8%",
+  "results": [
+    {
+      "test_name": "Health Check",
+      "success": true,
+      "message": "Status: 200",
+      "response_data": {
+        "status": "healthy",
+        "service": "ddys-compliance"
+      }
+    },
+    {
+      "test_name": "Seed Demo Data",
+      "success": true,
+      "message": "Status: 200",
+      "response_data": {
+        "message": "Demo data already exists",
+        "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7"
+      }
+    },
+    {
+      "test_name": "Admin Login",
+      "success": true,
+      "message": "Status: 200",
+      "response_data": {
+        "requires_mfa": false,
+        "mfa_token": null,
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZDhjNzA2ZDAtNDFmZS00YTMyLTk2MTItYWQwMmZhMDFlNGU5IiwiZW1haWwiOiJhZG1pbkBkZHlzLmNvbSIsIm5hbWUiOiJQbGF0Zm9ybSBBZG1pbiIsImdsb2JhbF9yb2xlIjoiR0xPQkFMX1NVUEVSX0FETUlOIiwidGVuYW50X3JvbGVzIjpbXSwibWZhX3ZlcmlmaWVkIjp0cnVlLCJleHAiOjE3NzEwMzkyMTJ9.j8RqsCoUrVRx0L5wMabu_h6_atv4aYifjhbPKII-iT4",
+        "user": {
+          "id": "d8c706d0-41fe-4a32-9612-ad02fa01e4e9",
+          "email": "admin@ddys.com",
+          "name": "Platform Admin",
+          "global_role": "GLOBAL_SUPER_ADMIN",
+          "mfa_enabled": false,
+          "status": "active",
+          "created_at": "2026-02-13T15:07:42.999814+00:00",
+          "updated_at": "2026-02-13T15:07:42.999829+00:00",
+          "tenant_roles": []
+        }
+      }
+    },
+    {
+      "test_name": "Maker Login",
+      "success": true,
+      "message": "Status: 200",
+      "response_data": {
+        "requires_mfa": false,
+        "mfa_token": null,
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZWY3ZjgxOTQtN2IwZi00YzJmLWJjODctY2QwNmJkYjNlNDgyIiwiZW1haWwiOiJtYWtlckBkZHlzLmNvbSIsIm5hbWUiOiJTYXJhaCBNYWtlciIsImdsb2JhbF9yb2xlIjoiRERZU19SQ01fTUFLRVIiLCJ0ZW5hbnRfcm9sZXMiOlt7ImlkIjoiZjdlODk2YmMtZDFlZS00MTcwLThjYjYtMjBkZTg2NDE2ZjAxIiwidXNlcl9pZCI6ImVmN2Y4MTk0LTdiMGYtNGMyZi1iYzg3LWNkMDZiZGIzZTQ4MiIsInRlbmFudF9pZCI6IjgxODljMDU2LWE1YWUtNDk5Yi1iOGE1LWJiYmQzZmNjMTdiNyIsInJvbGUiOiJERFlTX1JDTV9NQUtFUiIsImFjdGl2ZSI6dHJ1ZSwiY3JlYXRlZF9hdCI6IjIwMjYtMDItMTNUMTU6MDc6NDUuMjg1MTM4KzAwOjAwIn1dLCJtZmFfdmVyaWZpZWQiOnRydWUsImV4cCI6MTc3MTAzOTIxM30.FemlEulaa3F_TKiptTQ8KReaDi-FovmJ0utfeIwX9CE",
+        "user": {
+          "id": "ef7f8194-7b0f-4c2f-bc87-cd06bdb3e482",
+          "email": "maker@ddys.com",
+          "name": "Sarah Maker",
+          "global_role": "DDYS_RCM_MAKER",
+          "mfa_enabled": false,
+          "status": "active",
+          "created_at": "2026-02-13T15:07:43.236778+00:00",
+          "updated_at": "2026-02-13T15:07:43.236792+00:00",
+          "tenant_roles": [
+            {
+              "id": "f7e896bc-d1ee-4170-8cb6-20de86416f01",
+              "user_id": "ef7f8194-7b0f-4c2f-bc87-cd06bdb3e482",
+              "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
+              "role": "DDYS_RCM_MAKER",
+              "active": true,
+              "created_at": "2026-02-13T15:07:45.285138+00:00"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "test_name": "Customer Login",
+      "success": true,
+      "message": "Status: 200",
+      "response_data": {
+        "requires_mfa": false,
+        "mfa_token": null,
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZTBjM2NjZDUtMzI4ZC00MzI1LWI5NWItNjhhMzM2YTFiMmZhIiwiZW1haWwiOiJjdXN0b21lckBleGFtcGxlLmNvbSIsIm5hbWUiOiJKb2huIEN1c3RvbWVyIiwiZ2xvYmFsX3JvbGUiOiJFTkRfQ1VTVE9NRVIiLCJ0ZW5hbnRfcm9sZXMiOltdLCJtZmFfdmVyaWZpZWQiOnRydWUsImV4cCI6MTc3MTAzOTIxM30.cm2SE8NwGKw8aEcEJCk3ZGYAlDylQBEs8sW7wayf6nY",
+        "user": {
+          "id": "e0c3ccd5-328d-4325-b95b-68a336a1b2fa",
+          "email": "customer@example.com",
+          "name": "John Customer",
+          "global_role": "END_CUSTOMER",
+          "mfa_enabled": false,
+          "status": "active",
+          "created_at": "2026-02-13T15:07:45.284235+00:00",
+          "updated_at": "2026-02-13T15:07:45.284250+00:00",
+          "tenant_roles": []
+        }
+      }
+    },
+    {
+      "test_name": "Get Tenants",
+      "success": true,
+      "message": "Status: 200",
+      "response_data": [
+        {
+          "id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
+          "name": "Demo Bank",
+          "legal_name": "Demo Bank AG",
+          "default_jurisdiction": "EU",
+          "branding_json": {
+            "primary_color": "#1E40AF",
+            "logo_url": "",
+            "bank_name": "Demo Bank"
+          },
+          "status": "active",
+          "created_by": "system",
+          "created_at": "2026-02-13T15:07:42.744528+00:00",
+          "updated_at": "2026-02-13T15:07:42.744537+00:00",
+          "deleted": false
+        }
+      ]
+    },
+    {
+      "test_name": "Get Cases",
+      "success": true,
+      "message": "Status: 200",
+      "response_data": [
+        {
+          "id": "8af96840-bfc2-4f9c-9b22-710351a5ec52",
+          "case_ref": "DDY-20260213-DEMO01",
+          "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
+          "case_type": "onboarding",
+          "status": "customer_in_progress",
+          "risk_rating": "medium",
+          "due_diligence_level": "cdd",
+          "jurisdiction": "EU",
+          "product_scope": "Corporate Banking",
+          "nrd_date": null,
+          "created_by": "b228354a-8d47-4d9d-b28b-3b7d132e6ab2",
+          "assigned_maker_id": "ef7f8194-7b0f-4c2f-bc87-cd06bdb3e482",
+          "assigned_checker_id": "0f3d8972-ec66-4c75-a7a0-975c3a1a0c8f",
+          "assigned_mlro_id": "3ebbce34-1474-4c13-8194-fb83754fa129",
+          "sla_json": {
+            "onboarding_target_days": 30
+          },
+          "narrative": "",
+          "narrative_sections": {},
+          "last_action_at": "2026-02-13T15:07:45.307785+00:00",
+          "created_at": "2026-02-13T15:07:45.307789+00:00",
+          "updated_at": "2026-02-13T15:07:45.307791+00:00",
+          "deleted": false
+        }
+      ]
+    },
+    {
+      "test_name": "Create Case",
+      "success": true,
+      "message": "Status: 200",
+      "response_data": {
+        "id": "0a84d7eb-65fd-4582-8fba-3e661a7191c5",
+        "case_ref": "DDY-20260213-66EF8A",
+        "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
+        "case_type": "onboarding",
+        "status": "draft",
+        "risk_rating": null,
+        "due_diligence_level": null,
+        "jurisdiction": "EU",
+        "product_scope": "Corporate Banking",
+        "nrd_date": null,
+        "created_by": "d8c706d0-41fe-4a32-9612-ad02fa01e4e9",
+        "assigned_maker_id": null,
+        "assigned_checker_id": null,
+        "assigned_mlro_id": null,
+        "sla_json": {},
+        "narrative": "",
+        "narrative_sections": {},
+        "last_action_at": "2026-02-13T15:20:14.481767+00:00",
+        "created_at": "2026-02-13T15:20:14.481772+00:00",
+        "updated_at": "2026-02-13T15:20:14.481774+00:00",
+        "deleted": false
+      }
+    },
+    {
+      "test_name": "Get Case Detail",
+      "success": true,
+      "message": "Status: 200",
+      "response_data": {
+        "id": "0a84d7eb-65fd-4582-8fba-3e661a7191c5",
+        "case_ref": "DDY-20260213-66EF8A",
+        "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
+        "case_type": "onboarding",
+        "status": "draft",
+        "risk_rating": null,
+        "due_diligence_level": null,
+        "jurisdiction": "EU",
+        "product_scope": "Corporate Banking",
+        "nrd_date": null,
+        "created_by": "d8c706d0-41fe-4a32-9612-ad02fa01e4e9",
+        "assigned_maker_id": null,
+        "assigned_checker_id": null,
+        "assigned_mlro_id": null,
+        "sla_json": {},
+        "narrative": "",
+        "narrative_sections": {},
+        "last_action_at": "2026-02-13T15:20:14.481767+00:00",
+        "created_at": "2026-02-13T15:20:14.481772+00:00",
+        "updated_at": "2026-02-13T15:20:14.481774+00:00",
+        "deleted": false,
+        "parties": [],
+        "requirements": [],
+        "documents": [],
+        "screening_runs": [],
+        "risk_assessments": [],
+        "approval_tasks": [],
+        "waivers": []
+      }
+    },
+    {
+      "test_name": "Run Sanctions Screening",
+      "success": true,
+      "message": "Status: 200",
+      "response_data": {
+        "id": "935e2d09-8ef2-4b15-93ed-bcaca2f596e1",
+        "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
+        "case_id": "0a84d7eb-65fd-4582-8fba-3e661a7191c5",
+        "run_type": "sanctions",
+        "provider": "mock",
+        "started_at": "2026-02-13T15:20:14.786504+00:00",
+        "finished_at": null,
+        "status": "running",
+        "parameters_json": {
+          "parties_count": 0,
+          "run_type": "sanctions"
+        },
+        "created_at": "2026-02-13T15:20:14.786514+00:00",
+        "hits": []
+      }
+    },
+    {
+      "test_name": "Risk Assessment",
+      "success": true,
+      "message": "Status: 200",
+      "response_data": {
+        "id": "fe28530b-5483-4db9-9938-6b9877072379",
+        "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
+        "case_id": "0a84d7eb-65fd-4582-8fba-3e661a7191c5",
+        "methodology": "CRRM-like",
+        "inputs_json": {
+          "country": 2,
+          "industry": 2,
+          "product": 2,
+          "delivery_channel": 2,
+          "entity_type": 2
+        },
+        "per_se_flags_json": {
+          "pep": false,
+          "high_risk_country": false,
+          "gambling": false,
+          "bearer_shares": false,
+          "correspondent_banking": false,
+          "sanctions_nexus": false
+        },
+        "computed_score": 2.0,
+        "computed_rating": "low",
+        "final_rating": "low",
+        "due_diligence_level": "cdd",
+        "challenged": false,
+        "challenge_reason": null,
+        "approved_by_mlro": null,
+        "approved_at": null,
+        "created_at": "2026-02-13T15:20:14.968171+00:00"
+      }
+    },
+    {
+      "test_name": "KYC Export",
+      "success": true,
+      "message": "Status: 200",
+      "response_data": {
+        "id": "67654269-ec29-4318-89f1-259663e0968f",
+        "case_id": "0a84d7eb-65fd-4582-8fba-3e661a7191c5",
+        "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
+        "filename": "KYC_Export_DDY-20260213-66EF8A_20260213_152015.zip",
+        "storage_path": "/app/backend/exports/KYC_Export_DDY-20260213-66EF8A_20260213_152015.zip",
+        "file_size": 3973,
+        "created_at": "2026-02-13T15:20:15.385897+00:00"
+      }
+    },
+    {
+      "test_name": "Customer OTP Request",
+      "success": true,
+      "message": "Status: 200",
+      "response_data": {
+        "message": "OTP sent to email (demo: 123456)",
+        "demo_otp": "123456"
+      }
+    },
+    {
+      "test_name": "Customer OTP Verify",
+      "success": true,
+      "message": "Status: 200",
+      "response_data": {
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNmNlZjgxNmEtY2Q1MC00OWU1LWFlYTEtM2U1MzU3MTMzYTgxIiwiZW1haWwiOiJ0ZXN0LWN1c3RvbWVyQGV4YW1wbGUuY29tIiwibmFtZSI6InRlc3QtY3VzdG9tZXIiLCJnbG9iYWxfcm9sZSI6IkVORF9DVVNUT01FUiIsInRlbmFudF9yb2xlcyI6W3sidGVuYW50X2lkIjoiODE4OWMwNTYtYTVhZS00OTliLWI4YTUtYmJiZDNmY2MxN2I3Iiwicm9sZSI6IkVORF9DVVNUT01FUiJ9XSwibWZhX3ZlcmlmaWVkIjp0cnVlLCJleHAiOjE3NzEwMzkyMTV9.fwtN4WVmYi6p3oY3mY2r1YoZQJw8tp_xuAv61n32XKE",
+        "user": {
+          "id": "6cef816a-cd50-49e5-aea1-3e5357133a81",
+          "email": "test-customer@example.com",
+          "name": "test-customer",
+          "global_role": "END_CUSTOMER",
+          "mfa_enabled": false,
+          "status": "active",
+          "created_at": "2026-02-13T15:20:15.529231+00:00",
+          "updated_at": "2026-02-13T15:20:15.529243+00:00",
+          "tenant_roles": [
+            {
+              "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
+              "role": "END_CUSTOMER"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "test_name": "MI Global Stats",
+      "success": true,
+      "message": "Status: 200",
+      "response_data": {
+        "total_tenants": 1,
+        "total_cases": 2,
+        "tenant_stats": [
+          {
+            "tenant_id": "8189c056-a5ae-499b-b8a5-bbbd3fcc17b7",
+            "tenant_name": "Demo Bank",
+            "total_cases": 2,
+            "active_cases": 2,
+            "status": "active"
+          }
+        ],
+        "system_health": {
+          "status": "operational",
+          "uptime": "99.9%"
+        }
+      }
+    },
+    {
+      "test_name": "MI Tenant Stats",
+      "success": false,
+      "message": "Expected 200, got 404 - Not Found",
+      "response_data": null
+    }
+  ]
+}
