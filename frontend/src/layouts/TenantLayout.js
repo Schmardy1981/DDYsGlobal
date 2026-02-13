@@ -25,8 +25,14 @@ export default function TenantLayout() {
   const activeTenantId = getActiveTenantId();
 
   useEffect(() => {
-    api.get('/tenants').then(r => setTenants(r.data)).catch(() => {});
-  }, []);
+    api.get('/tenants').then(r => {
+      setTenants(r.data);
+      // Auto-select first tenant if none selected
+      if (!activeTenantId && r.data.length > 0) {
+        setActiveTenant(r.data[0].id);
+      }
+    }).catch(() => {});
+  }, [activeTenantId, setActiveTenant]);
 
   const activeTenant = tenants.find(t => t.id === activeTenantId);
 
