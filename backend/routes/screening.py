@@ -24,8 +24,11 @@ async def run_screening(request: Request):
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
     
-    # Get all parties
-    parties = await db.parties.find({"case_id": case_id, "deleted": {"$ne": True}}, {"_id": 0}).to_list(100)
+    # Get all parties - only fields needed for screening
+    parties = await db.parties.find({"case_id": case_id, "deleted": {"$ne": True}}, {
+        "_id": 0, "id": 1, "first_name": 1, "last_name": 1, "legal_name": 1,
+        "party_type": 1, "nationality": 1, "role_in_case": 1, "tenant_id": 1
+    }).to_list(100)
     
     screening_run = {
         "id": str(uuid.uuid4()),
