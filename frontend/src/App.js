@@ -66,6 +66,8 @@ function AppRoutes() {
         <Route path="screening" element={<ScreeningQueue />} />
         <Route path="waivers" element={<WaiversPage />} />
         <Route path="edr" element={<EDRPage />} />
+        <Route path="qa" element={<QAPage />} />
+        <Route path="video-ident" element={<VideoIdentPage />} />
         <Route path="mi" element={<MIDashboard />} />
         <Route path="settings" element={<TenantSettings />} />
       </Route>
