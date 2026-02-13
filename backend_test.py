@@ -274,7 +274,6 @@ class DDYsComplianceAPITester:
         
         # First we need to create a party for the case since demo data doesn't have parties
         party_data = {
-            "case_id": self.case_id,
             "party_type": "natural_person",
             "role_in_case": "applicant",
             "first_name": "John",
@@ -284,7 +283,7 @@ class DDYsComplianceAPITester:
             "pep_status": "none"
         }
         
-        party_success, party_response = self.run_test("Create Party for Video Ident", "POST", "parties", 200, party_data)
+        party_success, party_response = self.run_test("Create Party for Video Ident", "POST", f"cases/{self.case_id}/parties", 200, party_data)
         if not party_success or "id" not in party_response:
             self.log_result("Video Ident Module Tests", False, "Failed to create party for video ident test")
             return success1  # At least list sessions worked
