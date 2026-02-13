@@ -35,14 +35,13 @@ export default function CasesPipeline() {
   const [newCase, setNewCase] = useState({ case_type: 'onboarding', jurisdiction: 'EU', product_scope: '' });
 
   useEffect(() => {
-    if (!tenantId) {
-      setLoading(false);
-      return;
-    }
-    let url = `/cases?tenant_id=${tenantId}`;
-    if (statusFilter !== 'all') url += `&status=${statusFilter}`;
-    if (riskFilter !== 'all') url += `&risk_rating=${riskFilter}`;
-    if (typeFilter !== 'all') url += `&case_type=${typeFilter}`;
+    let url = '/cases';
+    const params = [];
+    if (tenantId) params.push(`tenant_id=${tenantId}`);
+    if (statusFilter !== 'all') params.push(`status=${statusFilter}`);
+    if (riskFilter !== 'all') params.push(`risk_rating=${riskFilter}`);
+    if (typeFilter !== 'all') params.push(`case_type=${typeFilter}`);
+    if (params.length) url += '?' + params.join('&');
     api.get(url).then(r => setCases(r.data)).catch(console.error).finally(() => setLoading(false));
   }, [tenantId, statusFilter, riskFilter, typeFilter]);
 
