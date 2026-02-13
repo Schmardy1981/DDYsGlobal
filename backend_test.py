@@ -346,6 +346,11 @@ class DDYsComplianceAPITester:
             self.test_kyc_export()
             self.test_customer_portal_endpoints()
             self.test_mi_endpoints()
+            
+            # Phase 2 feature tests
+            self.test_periodic_jobs()
+            self.test_qa_module()
+            self.test_video_ident_module()
         else:
             print("⚠️ Admin login failed - skipping authenticated tests")
 
