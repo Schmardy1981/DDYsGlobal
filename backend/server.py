@@ -74,6 +74,7 @@ app.include_router(notifications_router)
 app.include_router(edr_router)
 app.include_router(qa_router)
 app.include_router(video_ident_router)
+app.include_router(reminders_router)
 
 
 @app.get("/api")
