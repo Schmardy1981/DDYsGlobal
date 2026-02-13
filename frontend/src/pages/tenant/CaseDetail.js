@@ -143,7 +143,34 @@ export default function CaseDetail() {
           </div>
           <p className="text-sm text-[#64748B] mt-1">{c.case_type?.replace(/_/g, ' ')} | {c.jurisdiction} | {c.product_scope || 'N/A'}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Dialog open={showInvite} onOpenChange={setShowInvite}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="outline" data-testid="invite-customer-btn"><UserPlus size={14} className="mr-1" /> Invite Customer</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>Invite Customer</DialogTitle></DialogHeader>
+              <div className="space-y-4 pt-2">
+                <p className="text-sm text-[#64748B]">Send a secure invitation link to the customer to complete their KYC documentation.</p>
+                <div>
+                  <Label className="text-xs uppercase tracking-wider font-semibold text-[#64748B]">Customer Email</Label>
+                  <Input className="mt-1.5" type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder="customer@example.com" data-testid="invite-email-input" />
+                </div>
+                {inviteResult && (
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-md">
+                    <p className="text-sm text-green-700">{inviteResult.message}</p>
+                    <p className="text-xs font-['JetBrains_Mono'] mt-1 text-green-600">Link: {window.location.origin}{inviteResult.invite_url}</p>
+                  </div>
+                )}
+                <Button className="w-full bg-[#0F172A] hover:bg-[#1E293B]" onClick={handleInviteCustomer} disabled={!inviteEmail} data-testid="send-invite-btn">
+                  <Send size={14} className="mr-1" /> Send Invitation
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+          <Button size="sm" variant="outline" onClick={handleSendReminder} disabled={sendingReminder} data-testid="send-reminder-btn">
+            <Bell size={14} className="mr-1" /> {sendingReminder ? 'Sending...' : 'Send Reminder'}
+          </Button>
           {(nextTransitions[c.status] || []).map(t => (
             <Button key={t} size="sm" variant="outline" onClick={() => handleTransition(t)} data-testid={`transition-${t}`}>
               {t.replace(/_/g, ' ')}
