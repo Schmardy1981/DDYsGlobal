@@ -361,7 +361,9 @@ async def _run_screening_refresh(db, now: datetime):
     active_cases = await db.cases.find({
         "status": "completed",
         "deleted": {"$ne": True}
-    }, {"_id": 0}).to_list(1000)
+    }, {
+        "_id": 0, "id": 1, "tenant_id": 1, "case_ref": 1, "assigned_maker_id": 1
+    }).to_list(1000)
 
     for case in active_cases:
         # Check last screening run
