@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Shield, Building2, Users, Settings, BarChart3, FileText, Bell, LogOut, ChevronLeft, ChevronRight, Activity } from 'lucide-react';
+import { Shield, Building2, Users, Settings, BarChart3, FileText, Bell, LogOut, ChevronLeft, ChevronRight, Activity, Clock } from 'lucide-react';
 import NotificationBell from '@/components/shared/NotificationBell';
 
 const NAV_ITEMS = [
@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { label: 'Tenants', path: '/admin/tenants', icon: Building2 },
   { label: 'Users', path: '/admin/users', icon: Users },
   { label: 'Policy', path: '/admin/policy', icon: FileText },
+  { label: 'Jobs', path: '/admin/jobs', icon: Clock },
   { label: 'Settings', path: '/admin/settings', icon: Settings },
 ];
 
