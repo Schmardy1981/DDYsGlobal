@@ -25,17 +25,42 @@ export default function CaseDetail() {
   const [auditLogs, setAuditLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('overview');
+  const [showInvite, setShowInvite] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteResult, setInviteResult] = useState(null);
+  const [reminders, setReminders] = useState([]);
+  const [sendingReminder, setSendingReminder] = useState(false);
 
   useEffect(() => { loadCase(); }, [caseId]);
 
   const loadCase = () => {
     Promise.all([
       api.get(`/cases/${caseId}`),
-      api.get(`/audit/case/${caseId}`)
-    ]).then(([caseRes, auditRes]) => {
+      api.get(`/audit/case/${caseId}`),
+      api.get(`/reminders?case_id=${caseId}`)
+    ]).then(([caseRes, auditRes, remRes]) => {
       setCaseData(caseRes.data);
       setAuditLogs(auditRes.data);
+      setReminders(remRes.data);
     }).catch(console.error).finally(() => setLoading(false));
+  };
+
+  const handleInviteCustomer = async () => {
+    try {
+      const res = await api.post('/reminders/invite-customer', { case_id: caseId, email: inviteEmail });
+      setInviteResult(res.data);
+      loadCase();
+    } catch (err) { alert(err.response?.data?.detail || 'Failed'); }
+  };
+
+  const handleSendReminder = async () => {
+    setSendingReminder(true);
+    try {
+      const res = await api.post('/reminders/send', { case_id: caseId });
+      alert(res.data.message);
+      loadCase();
+    } catch (err) { alert(err.response?.data?.detail || 'Failed'); }
+    finally { setSendingReminder(false); }
   };
 
   const handleTransition = async (target) => {
