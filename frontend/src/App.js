@@ -47,7 +47,7 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/login" element={isAuthenticated ? <Navigate to={getPortal() === 'admin' ? '/admin' : getPortal() === 'customer' ? '/portal/dashboard' : '/workspace/cases'} /> : <LoginPage />} />
+      <Route path="/login" element={<LoginPage />} />
       
       {/* Admin Routes */}
       <Route path="/admin" element={<ProtectedRoute portal="admin"><AdminLayout /></ProtectedRoute>}>
