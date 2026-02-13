@@ -82,7 +82,41 @@ async def root():
 
 @app.get("/api/health")
 async def health():
-    return {"status": "healthy", "service": "ddys-compliance"}
+    jobs_status = await db.system_settings.find_one({"key": "periodic_jobs"}, {"_id": 0})
+    return {
+        "status": "healthy",
+        "service": "ddys-compliance",
+        "periodic_jobs": jobs_status or {"status": "not_started"}
+    }
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Start periodic background jobs on startup."""
+    from services.periodic_jobs import start_periodic_jobs
+    await start_periodic_jobs(db)
+    logger.info("Periodic background jobs started")
+
+
+@app.post("/api/jobs/run-now")
+async def run_jobs_now_endpoint(request: Request):
+    """Manually trigger all periodic jobs."""
+    from middleware.auth_middleware import get_current_user
+    user = await get_current_user(request)
+    if user.get("global_role") not in ["GLOBAL_SUPER_ADMIN", "DDYS_COMPLIANCE_MANAGER"]:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    from services.periodic_jobs import run_jobs_now
+    result = await run_jobs_now(db)
+    return result
+
+
+@app.get("/api/jobs/status")
+async def get_jobs_status(request: Request):
+    from middleware.auth_middleware import get_current_user
+    user = await get_current_user(request)
+    status = await db.system_settings.find_one({"key": "periodic_jobs"}, {"_id": 0})
+    return status or {"key": "periodic_jobs", "status": "not_started"}
 
 
 @app.post("/api/seed")
