@@ -207,6 +207,119 @@ class DDYsComplianceAPITester:
             return success1 and success2
         return success1
 
+    # ====== Phase 2 Feature Tests ======
+    
+    def test_periodic_jobs(self):
+        """Test periodic jobs endpoints"""
+        # Test get jobs status
+        success1, status_response = self.run_test("Get Jobs Status", "GET", "jobs/status", 200)
+        
+        # Test run jobs now (requires admin permissions)
+        success2, run_response = self.run_test("Run Jobs Now", "POST", "jobs/run-now", 200)
+        
+        return success1 and success2
+    
+    def test_qa_module(self):
+        """Test QA module endpoints"""
+        if not self.tenant_id:
+            self.log_result("QA Module Tests", False, "No tenant_id available")
+            return False
+        
+        # Test list QA reviews
+        success1, reviews_response = self.run_test("List QA Reviews", "GET", f"qa/reviews?tenant_id={self.tenant_id}", 200)
+        
+        # Test generate QA sample
+        sample_data = {
+            "tenant_id": self.tenant_id,
+            "sample_percent": 5,
+            "qa_type": "first_line"
+        }
+        success2, sample_response = self.run_test("Generate QA Sample", "POST", "qa/sample", 200, sample_data)
+        
+        # Test create manual QA review
+        if self.case_id:
+            qa_review_data = {
+                "tenant_id": self.tenant_id,
+                "case_id": self.case_id,
+                "qa_type": "first_line",
+                "severity": "low",
+                "findings": ["Test finding 1", "Test finding 2"],
+                "remediation_required": False
+            }
+            success3, review_response = self.run_test("Create QA Review", "POST", "qa/reviews", 200, qa_review_data)
+            
+            # Test update QA review (if we got a review ID)
+            if success3 and "id" in review_response:
+                review_id = review_response["id"]
+                update_data = {"status": "closed", "severity": "medium"}
+                success4, _ = self.run_test("Update QA Review", "PUT", f"qa/reviews/{review_id}", 200, update_data)
+            else:
+                success4 = False
+        else:
+            success3 = success4 = False
+        
+        # Test governance pack
+        success5, _ = self.run_test("Get Governance Pack", "GET", f"qa/governance-pack?tenant_id={self.tenant_id}", 200)
+        
+        return success1 and success2 and success3 and success4 and success5
+    
+    def test_video_ident_module(self):
+        """Test Video Ident module endpoints"""
+        if not self.tenant_id or not self.case_id:
+            self.log_result("Video Ident Module Tests", False, "No tenant_id or case_id available")
+            return False
+        
+        # Test list video ident sessions
+        success1, sessions_response = self.run_test("List Video Ident Sessions", "GET", f"video-ident/sessions?tenant_id={self.tenant_id}", 200)
+        
+        # First we need to get a case with parties to create a session
+        case_success, case_response = self.run_test("Get Case for Video Ident", "GET", f"cases/{self.case_id}", 200)
+        if not case_success or not case_response.get("parties"):
+            self.log_result("Video Ident Module Tests", False, "No parties in case for video ident session")
+            return False
+        
+        # Get first natural person party
+        natural_parties = [p for p in case_response["parties"] if p.get("party_type") == "natural_person"]
+        if not natural_parties:
+            self.log_result("Video Ident Module Tests", False, "No natural person parties for video ident")
+            return False
+        
+        party_id = natural_parties[0]["id"]
+        
+        # Test create video ident session
+        session_data = {
+            "case_id": self.case_id,
+            "party_id": party_id,
+            "scheduled_at": "2024-03-01T14:00:00Z"
+        }
+        success2, session_response = self.run_test("Create Video Ident Session", "POST", "video-ident/sessions", 200, session_data)
+        
+        session_id = None
+        if success2 and "id" in session_response:
+            session_id = session_response["id"]
+            
+            # Test get specific session
+            success3, _ = self.run_test("Get Video Ident Session", "GET", f"video-ident/sessions/{session_id}", 200)
+            
+            # Test join session as agent
+            join_data = {"role": "agent"}
+            success4, _ = self.run_test("Join Video Ident Session", "POST", f"video-ident/sessions/{session_id}/join", 200, join_data)
+            
+            # Test complete session
+            complete_data = {
+                "outcome": "pass",
+                "notes": "Test completion",
+                "identity_confirmed": True,
+                "document_match": True,
+                "liveness_score": 0.85,
+                "deepfake_score": 0.05
+            }
+            success5, _ = self.run_test("Complete Video Ident Session", "POST", f"video-ident/sessions/{session_id}/complete", 200, complete_data)
+        else:
+            success3 = success4 = success5 = False
+        
+        return success1 and success2 and success3 and success4 and success5
+
     def run_all_tests(self):
         """Run all API tests"""
         print("🚀 Starting DDYs Compliance API Tests")
