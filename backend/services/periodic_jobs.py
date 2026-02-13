@@ -236,7 +236,10 @@ async def _check_waiver_expiry(db, now: datetime):
         "status": "approved",
         "waiver_type": "temporary",
         "expires_at": {"$ne": None}
-    }, {"_id": 0}).to_list(5000)
+    }, {
+        "_id": 0, "id": 1, "expires_at": 1, "tenant_id": 1, "case_id": 1,
+        "requested_by": 1, "requirement_keys_json": 1, "status": 1
+    }).to_list(5000)
 
     for waiver in active_waivers:
         expires_str = waiver.get("expires_at")
