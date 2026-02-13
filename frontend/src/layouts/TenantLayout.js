@@ -3,15 +3,17 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Briefcase, FolderOpen, Search, FileWarning, Shield, BarChart3, Settings, Bell, LogOut, ChevronLeft, ChevronRight, AlertTriangle, Clock } from 'lucide-react';
+import { Briefcase, FolderOpen, Search, FileWarning, Shield, BarChart3, Settings, Bell, LogOut, ChevronLeft, ChevronRight, AlertTriangle, Clock, Video, ClipboardCheck } from 'lucide-react';
 import NotificationBell from '@/components/shared/NotificationBell';
 import api from '@/api/client';
 
 const NAV_ITEMS = [
   { label: 'Cases', path: '/workspace/cases', icon: FolderOpen },
   { label: 'Screening', path: '/workspace/screening', icon: Search },
+  { label: 'Video Ident', path: '/workspace/video-ident', icon: Video },
   { label: 'Waivers', path: '/workspace/waivers', icon: FileWarning },
   { label: 'EDR Alerts', path: '/workspace/edr', icon: AlertTriangle },
+  { label: 'QA', path: '/workspace/qa', icon: ClipboardCheck },
   { label: 'MI Dashboard', path: '/workspace/mi', icon: BarChart3 },
   { label: 'Settings', path: '/workspace/settings', icon: Settings },
 ];
