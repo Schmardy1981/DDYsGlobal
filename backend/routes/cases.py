@@ -60,7 +60,12 @@ async def list_cases(request: Request, tenant_id: Optional[str] = None, status: 
     if case_type:
         query["case_type"] = case_type
     
-    cases = await db.cases.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    cases = await db.cases.find(query, {
+        "_id": 0, "id": 1, "case_ref": 1, "tenant_id": 1, "case_type": 1,
+        "status": 1, "risk_rating": 1, "due_diligence_level": 1, "jurisdiction": 1,
+        "product_scope": 1, "nrd_date": 1, "created_at": 1, "updated_at": 1,
+        "assigned_maker_id": 1, "assigned_checker_id": 1, "last_action_at": 1
+    }).sort("created_at", -1).to_list(1000)
     return cases
 
 
