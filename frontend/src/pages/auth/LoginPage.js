@@ -19,6 +19,16 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Clear any stale sessions on login page mount
+  useEffect(() => {
+    localStorage.removeItem('ddys_token');
+    localStorage.removeItem('ddys_user');
+    localStorage.removeItem('ddys_active_tenant');
+    localStorage.removeItem('ddys_customer_case_id');
+    localStorage.removeItem('ddys_customer_case_ref');
+    localStorage.removeItem('ddys_customer_tenant');
+  }, []);
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
@@ -33,7 +43,8 @@ export default function LoginPage() {
         redirectUser(res.user);
       }
     } catch (err) {
-      setError(err.response?.data?.detail || 'Login failed');
+      const detail = err.response?.data?.detail || err.message || 'Login failed. Please check your credentials.';
+      setError(detail);
     } finally {
       setLoading(false);
     }
