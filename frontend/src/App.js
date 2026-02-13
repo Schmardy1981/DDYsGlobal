@@ -16,6 +16,7 @@ import TenantsPage from '@/pages/admin/TenantsPage';
 import UsersPage from '@/pages/admin/UsersPage';
 import PolicyPage from '@/pages/admin/PolicyPage';
 import SettingsPage from '@/pages/admin/SettingsPage';
+import PeriodicJobsPage from '@/pages/admin/PeriodicJobsPage';
 
 // Tenant Pages
 import CasesPipeline from '@/pages/tenant/CasesPipeline';
@@ -25,6 +26,8 @@ import WaiversPage from '@/pages/tenant/WaiversPage';
 import MIDashboard from '@/pages/tenant/MIDashboard';
 import TenantSettings from '@/pages/tenant/TenantSettings';
 import EDRPage from '@/pages/tenant/EDRPage';
+import QAPage from '@/pages/tenant/QAPage';
+import VideoIdentPage from '@/pages/tenant/VideoIdentPage';
 
 // Customer Pages
 import CustomerLanding from '@/pages/customer/CustomerLanding';
