@@ -102,6 +102,39 @@ Build a production-ready, multi-tenant "Compliance as a Service" platform for KY
 - Risk Score Trend analytics over time
 - Training acknowledgement for KOS updates
 
+## What's Been Implemented (Iteration 3 - Feb 2026)
+### Login & Access Fixes
+- Admin (GLOBAL_SUPER_ADMIN) can now access BOTH admin console and workspace via portal switcher buttons
+- All role-based logins verified working
+- Admin sees ALL cases across all tenants
+
+### Customer Invite Flow (from inside the system)
+- "Invite Customer" button on Case Detail page
+- Creates invite with unique token → generates portal link (/portal/invite/{token})
+- Customer verifies email + OTP → gets JWT → sees case dashboard
+- No more external landing page needed for invited customers
+
+### Document Intelligence Enhancement
+- Cross-document auto-fill: Tax return auto-satisfies utility bill / proof of address
+- Police report auto-satisfies proof of address
+- Recency checks: 3 months for individuals, 12 months for legal entities (configurable per tenant policy)
+- Wrong document type detection via LLM classification
+- OCR text preview in AI results
+
+### Email Reminders
+- Manual "Send Reminder" button on case detail (for missing documents)
+- Customer invitation tracking (sent, accepted)
+- Reminder history per case
+- Auto-reminder configuration endpoint (intervals: 7/14/21/28 days)
+- All reminders are MOCKED (configure SendGrid/Resend in Admin > Settings)
+
+### Customer Portal UX
+- Requirements grouped by party with role badges
+- (?) info tooltips on every requirement explaining exactly what's needed
+- Cross-fill visual feedback ("Auto-satisfied by tax_return upload")
+- Rejected documents show specific reasons
+- Progress bar with completion tracking
+
 ## Demo Credentials
 | Email | Password | Role |
 |-------|----------|------|
