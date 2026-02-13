@@ -76,6 +76,7 @@ function AppRoutes() {
       {/* Customer Portal Routes */}
       <Route path="/portal" element={<CustomerLayout />}>
         <Route index element={<CustomerLanding />} />
+        <Route path="invite/:token" element={<CustomerInvitePage />} />
         <Route path="dashboard" element={<ProtectedRoute portal="customer"><CustomerDashboard /></ProtectedRoute>} />
         <Route path="questionnaire" element={<ProtectedRoute portal="customer"><Questionnaire /></ProtectedRoute>} />
       </Route>
