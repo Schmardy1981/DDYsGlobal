@@ -54,6 +54,7 @@ function AppRoutes() {
         <Route path="tenants" element={<TenantsPage />} />
         <Route path="users" element={<UsersPage />} />
         <Route path="policy" element={<PolicyPage />} />
+        <Route path="jobs" element={<PeriodicJobsPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
 
