@@ -51,7 +51,7 @@ function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
       
       {/* Admin Routes */}
-      <Route path="/admin" element={<ProtectedRoute portal="admin"><AdminLayout /></ProtectedRoute>}>
+      <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
         <Route index element={<AdminDashboard />} />
         <Route path="tenants" element={<TenantsPage />} />
         <Route path="users" element={<UsersPage />} />
@@ -62,7 +62,7 @@ function AppRoutes() {
       </Route>
 
       {/* Tenant Workspace Routes */}
-      <Route path="/workspace" element={<ProtectedRoute portal="tenant"><TenantLayout /></ProtectedRoute>}>
+      <Route path="/workspace" element={<ProtectedRoute><TenantLayout /></ProtectedRoute>}>
         <Route index element={<Navigate to="/workspace/cases" replace />} />
         <Route path="cases" element={<CasesPipeline />} />
         <Route path="case/:caseId" element={<CaseDetail />} />
@@ -79,8 +79,8 @@ function AppRoutes() {
       <Route path="/portal" element={<CustomerLayout />}>
         <Route index element={<CustomerLanding />} />
         <Route path="invite/:token" element={<CustomerInvitePage />} />
-        <Route path="dashboard" element={<ProtectedRoute portal="customer"><CustomerDashboard /></ProtectedRoute>} />
-        <Route path="questionnaire" element={<ProtectedRoute portal="customer"><Questionnaire /></ProtectedRoute>} />
+        <Route path="dashboard" element={<ProtectedRoute><CustomerDashboard /></ProtectedRoute>} />
+        <Route path="questionnaire" element={<ProtectedRoute><Questionnaire /></ProtectedRoute>} />
       </Route>
 
       {/* Default redirect */}
