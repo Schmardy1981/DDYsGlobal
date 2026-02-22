@@ -712,35 +712,48 @@ function PartyEditForm({ party, onSave, onClose }) {
     role_in_case: party.role_in_case || '',
     first_name: party.first_name || '',
     last_name: party.last_name || '',
+    middle_names: party.identifiers_json?.middle_names || '',
     legal_name: party.legal_name || '',
     dob: party.dob || '',
+    place_of_birth: party.identifiers_json?.place_of_birth || '',
     nationality: party.nationality || '',
     ownership_percent: party.ownership_percent || '',
     address: typeof party.addresses_json === 'object' ? Object.values(party.addresses_json)[0] || '' : '',
-    passport: party.identifiers_json?.passport || '',
+    // ID Document fields
+    passport_number: party.identifiers_json?.passport || '',
+    passport_expiry: party.identifiers_json?.passport_expiry || '',
+    passport_issued: party.identifiers_json?.passport_issued || '',
+    passport_issuing_authority: party.identifiers_json?.passport_issuing_authority || '',
+    passport_mrz: party.identifiers_json?.passport_mrz || '',
     national_id: party.identifiers_json?.national_id || '',
+    national_id_expiry: party.identifiers_json?.national_id_expiry || '',
+    // Company fields
     registration_number: party.identifiers_json?.registration_number || '',
     lei: party.identifiers_json?.lei || '',
   });
 
   const handleSave = () => {
     const addrKey = form.party_type === 'legal_entity' ? 'registered' : 'residential';
+    const identifiers = {};
+    if (form.passport_number) identifiers.passport = form.passport_number;
+    if (form.passport_expiry) identifiers.passport_expiry = form.passport_expiry;
+    if (form.passport_issued) identifiers.passport_issued = form.passport_issued;
+    if (form.passport_issuing_authority) identifiers.passport_issuing_authority = form.passport_issuing_authority;
+    if (form.passport_mrz) identifiers.passport_mrz = form.passport_mrz;
+    if (form.middle_names) identifiers.middle_names = form.middle_names;
+    if (form.place_of_birth) identifiers.place_of_birth = form.place_of_birth;
+    if (form.national_id) identifiers.national_id = form.national_id;
+    if (form.national_id_expiry) identifiers.national_id_expiry = form.national_id_expiry;
+    if (form.registration_number) identifiers.registration_number = form.registration_number;
+    if (form.lei) identifiers.lei = form.lei;
+
     onSave({
-      party_type: form.party_type,
-      role_in_case: form.role_in_case,
-      first_name: form.first_name,
-      last_name: form.last_name,
-      legal_name: form.legal_name,
-      dob: form.dob || null,
-      nationality: form.nationality,
+      party_type: form.party_type, role_in_case: form.role_in_case,
+      first_name: form.first_name, last_name: form.last_name, legal_name: form.legal_name,
+      dob: form.dob || null, nationality: form.nationality,
       ownership_percent: form.ownership_percent ? parseFloat(form.ownership_percent) : null,
       addresses_json: form.address ? { [addrKey]: form.address } : {},
-      identifiers_json: {
-        ...(form.passport && { passport: form.passport }),
-        ...(form.national_id && { national_id: form.national_id }),
-        ...(form.registration_number && { registration_number: form.registration_number }),
-        ...(form.lei && { lei: form.lei }),
-      }
+      identifiers_json: identifiers
     });
   };
 
@@ -761,6 +774,7 @@ function PartyEditForm({ party, onSave, onClose }) {
           </select>
         </div>
       </div>
+
       {isCompany ? (
         <>
           <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Company Name</Label><Input className="mt-1" value={form.legal_name} onChange={e => s('legal_name', e.target.value)} /></div>
@@ -771,20 +785,39 @@ function PartyEditForm({ party, onSave, onClose }) {
         </>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">First Name</Label><Input className="mt-1" value={form.first_name} onChange={e => s('first_name', e.target.value)} /></div>
+            <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Middle Names</Label><Input className="mt-1" value={form.middle_names} onChange={e => s('middle_names', e.target.value)} placeholder="If applicable" /></div>
             <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Last Name</Label><Input className="mt-1" value={form.last_name} onChange={e => s('last_name', e.target.value)} /></div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Date of Birth</Label><Input className="mt-1" type="date" value={form.dob} onChange={e => s('dob', e.target.value)} /></div>
-            <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Passport No.</Label><Input className="mt-1" value={form.passport} onChange={e => s('passport', e.target.value)} /></div>
+            <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Place of Birth</Label><Input className="mt-1" value={form.place_of_birth} onChange={e => s('place_of_birth', e.target.value)} placeholder="City, Country" /></div>
+            <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Nationality</Label><Input className="mt-1" value={form.nationality} onChange={e => s('nationality', e.target.value)} /></div>
           </div>
-          <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">National ID</Label><Input className="mt-1" value={form.national_id} onChange={e => s('national_id', e.target.value)} /></div>
+
+          {/* Passport / ID Section */}
+          <div className="border border-[#E2E8F0] rounded-md p-3 space-y-3">
+            <p className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Passport / ID Document</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Passport Number</Label><Input className="mt-1 font-['JetBrains_Mono']" value={form.passport_number} onChange={e => s('passport_number', e.target.value)} placeholder="C01X00T47" /></div>
+              <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">National ID Number</Label><Input className="mt-1 font-['JetBrains_Mono']" value={form.national_id} onChange={e => s('national_id', e.target.value)} /></div>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Issue Date</Label><Input className="mt-1" type="date" value={form.passport_issued} onChange={e => s('passport_issued', e.target.value)} /></div>
+              <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Expiry Date</Label><Input className="mt-1" type="date" value={form.passport_expiry} onChange={e => s('passport_expiry', e.target.value)} /></div>
+              <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">ID Expiry</Label><Input className="mt-1" type="date" value={form.national_id_expiry} onChange={e => s('national_id_expiry', e.target.value)} /></div>
+            </div>
+            <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Issuing Authority</Label><Input className="mt-1" value={form.passport_issuing_authority} onChange={e => s('passport_issuing_authority', e.target.value)} placeholder="e.g. Bundesrepublik Deutschland" /></div>
+            <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">MRZ (Machine Readable Zone)</Label><Input className="mt-1 font-['JetBrains_Mono'] text-xs" value={form.passport_mrz} onChange={e => s('passport_mrz', e.target.value)} placeholder="P<DEUMUELLER<<HANS<<<<<<<<<<<<<<..." /></div>
+          </div>
         </>
       )}
+
       <div className="grid grid-cols-2 gap-3">
-        <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Nationality</Label><Input className="mt-1" value={form.nationality} onChange={e => s('nationality', e.target.value)} /></div>
-        <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Ownership %</Label><Input className="mt-1" type="number" value={form.ownership_percent} onChange={e => s('ownership_percent', e.target.value)} /></div>
+        {!isCompany && <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Ownership %</Label><Input className="mt-1" type="number" value={form.ownership_percent} onChange={e => s('ownership_percent', e.target.value)} /></div>}
+        {isCompany && <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Nationality / Jurisdiction</Label><Input className="mt-1" value={form.nationality} onChange={e => s('nationality', e.target.value)} /></div>}
+        {isCompany && <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Ownership %</Label><Input className="mt-1" type="number" value={form.ownership_percent} onChange={e => s('ownership_percent', e.target.value)} /></div>}
       </div>
       <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Address</Label><Input className="mt-1" value={form.address} onChange={e => s('address', e.target.value)} /></div>
       <div className="flex gap-2">
