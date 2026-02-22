@@ -296,6 +296,29 @@ async def update_prompts(request: Request):
     return {"message": "Prompts updated"}
 
 
+# Document file viewer
+@app.get("/api/documents/view/{doc_id}")
+async def view_document_file(doc_id: str, request: Request):
+    from middleware.auth_middleware import get_current_user
+    user = await get_current_user(request)
+    doc = await db.documents.find_one({"id": doc_id}, {"_id": 0})
+    if not doc:
+        from fastapi import HTTPException as HE
+        raise HE(status_code=404, detail="Document not found")
+    storage_path = doc.get("storage_path")
+    if not storage_path:
+        from fastapi import HTTPException as HE
+        raise HE(status_code=404, detail="File not available")
+    import os
+    if not os.path.exists(storage_path):
+        from fastapi import HTTPException as HE
+        raise HE(status_code=404, detail="File not found on disk")
+    mime = doc.get("mime_type", "application/octet-stream")
+    return FileResponse(storage_path, media_type=mime, filename=doc.get("original_filename", "document"))
+
+
+
+
 # KYC Export endpoint
 @app.post("/api/export/kyc/{case_id}")
 async def export_kyc(case_id: str, request: Request):
