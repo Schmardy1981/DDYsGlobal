@@ -37,13 +37,7 @@ export default function LoginPage() {
   const [quickLoading, setQuickLoading] = useState(null);
 
   useEffect(() => {
-    localStorage.removeItem('ddys_token');
-    localStorage.removeItem('ddys_user');
-    localStorage.removeItem('ddys_active_tenant');
-    localStorage.removeItem('ddys_customer_case_id');
-    localStorage.removeItem('ddys_customer_case_ref');
-    localStorage.removeItem('ddys_customer_tenant');
-    // Load available users
+    // Load available users for quick access
     api.get('/auth/users-list').then(r => setUsers(r.data)).catch(() => {});
   }, []);
 
