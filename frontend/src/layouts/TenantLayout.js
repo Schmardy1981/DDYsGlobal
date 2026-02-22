@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Briefcase, FolderOpen, Search, FileWarning, Shield, BarChart3, Settings, Bell, LogOut, ChevronLeft, ChevronRight, AlertTriangle, Clock, Video, ClipboardCheck, ArrowRightLeft } from 'lucide-react';
+import { Briefcase, FolderOpen, Search, FileWarning, Shield, BarChart3, Settings, Bell, LogOut, ChevronLeft, ChevronRight, AlertTriangle, Clock, Video, ClipboardCheck, ArrowRightLeft, Inbox } from 'lucide-react';
 import NotificationBell from '@/components/shared/NotificationBell';
 import api from '@/api/client';
 
