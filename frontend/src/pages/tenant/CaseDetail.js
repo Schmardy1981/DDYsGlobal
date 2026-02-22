@@ -474,23 +474,83 @@ export default function CaseDetail() {
             </Card>
           </TabsContent>
 
-          {/* ===== TAB: SCREENING ===== */}
+          {/* ===== TAB: SCREENING (with OSINT) ===== */}
           <TabsContent value="screening">
-            <div className="space-y-4">
-              <div className="flex gap-2">
-                <Button size="sm" onClick={() => handleScreening('sanctions')} data-testid="run-sanctions"><Shield size={14} className="mr-1" /> Sanctions</Button>
-                <Button size="sm" onClick={() => handleScreening('pep')} data-testid="run-pep"><Users size={14} className="mr-1" /> PEP</Button>
-                <Button size="sm" onClick={() => handleScreening('adverse_media')} data-testid="run-adverse"><AlertTriangle size={14} className="mr-1" /> Adverse Media</Button>
+            <div className="space-y-6">
+              {/* Batch screening */}
+              <div>
+                <h3 className="text-xs font-semibold text-[#64748B] uppercase tracking-wider mb-2">Batch Screening (All Parties)</h3>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={() => handleScreening('sanctions')} data-testid="run-sanctions"><Shield size={14} className="mr-1" /> Sanctions</Button>
+                  <Button size="sm" onClick={() => handleScreening('pep')} data-testid="run-pep"><Users size={14} className="mr-1" /> PEP</Button>
+                  <Button size="sm" onClick={() => handleScreening('adverse_media')} data-testid="run-adverse"><AlertTriangle size={14} className="mr-1" /> Adverse Media</Button>
+                </div>
               </div>
-              {screeningRuns.map(run => (
-                <Card key={run.id} className="border-[#E2E8F0]"><CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2"><Badge variant="outline" className="text-xs uppercase">{run.run_type}</Badge><Badge className={run.status === 'completed' ? 'bg-green-100 text-green-700 border-transparent' : 'bg-amber-100 text-amber-700 border-transparent'}>{run.status}</Badge><span className="text-xs text-[#64748B] font-['JetBrains_Mono']">{run.started_at?.slice(0,19)}</span></div>
-                    <span className="text-xs text-[#64748B]">Hits: {run.parameters_json?.hits_count ?? '?'}</span>
-                  </div>
-                </CardContent></Card>
-              ))}
-              {!screeningRuns.length && <p className="text-sm text-[#64748B] text-center py-8">No screening runs yet. Use the buttons above to run checks.</p>}
+
+              {/* OSINT per party */}
+              <div>
+                <h3 className="text-xs font-semibold text-[#64748B] uppercase tracking-wider mb-2">OSINT Screening (Per Party)</h3>
+                <div className="space-y-2">
+                  {parties.map(p => {
+                    const pName = p.legal_name || `${p.first_name} ${p.last_name}`.trim();
+                    const pOsint = osintResults.filter(r => r.party_id === p.id);
+                    return (
+                      <Card key={p.id} className="border-[#E2E8F0]">
+                        <CardContent className="p-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              {p.party_type === 'legal_entity' ? <Building2 size={14} className="text-blue-600" /> : <User size={14} className="text-purple-600" />}
+                              <span className="text-sm font-medium">{pName}</span>
+                              <Badge className={`${ROLE_COLORS[p.role_in_case] || 'bg-gray-100'} border-transparent text-[10px] capitalize`}>{p.role_in_case}</Badge>
+                              {pOsint.length > 0 && (
+                                <Badge className={
+                                  pOsint[0]?.result_json?.overall_risk_assessment === 'high' ? 'bg-red-100 text-red-700 border-transparent text-[10px]' :
+                                  pOsint[0]?.result_json?.overall_risk_assessment === 'medium' ? 'bg-amber-100 text-amber-700 border-transparent text-[10px]' :
+                                  'bg-green-100 text-green-700 border-transparent text-[10px]'
+                                }>{pOsint[0]?.result_json?.overall_risk_assessment || 'checked'}</Badge>
+                              )}
+                            </div>
+                            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => handleOsintScreening(p.id)} disabled={runningOsint === p.id} data-testid={`osint-screen-${p.id}`}>
+                              <Search size={12} className="mr-1" /> {runningOsint === p.id ? 'Running...' : 'Run OSINT'}
+                            </Button>
+                          </div>
+                          {pOsint.length > 0 && (
+                            <div className="mt-2 p-2 bg-[#F8FAFC] rounded-md text-xs space-y-1">
+                              <div className="grid grid-cols-4 gap-2">
+                                <div><span className="text-[#64748B]">PEP:</span> <span className="font-medium">{pOsint[0]?.result_json?.pep_likelihood}</span></div>
+                                <div><span className="text-[#64748B]">Sanctions:</span> <span className="font-medium">{pOsint[0]?.result_json?.sanctions_risk}</span></div>
+                                <div><span className="text-[#64748B]">Country:</span> <span className="font-medium">{pOsint[0]?.result_json?.country_risk}</span></div>
+                                <div><span className="text-[#64748B]">Overall:</span> <span className="font-semibold">{pOsint[0]?.result_json?.overall_risk_assessment}</span></div>
+                              </div>
+                              {pOsint[0]?.result_json?.adverse_media_summary && (
+                                <p className="text-[#64748B]"><span className="font-medium">Adverse Media:</span> {pOsint[0].result_json.adverse_media_summary}</p>
+                              )}
+                              {pOsint[0]?.result_json?.recommendations?.length > 0 && (
+                                <div><span className="font-medium text-[#64748B]">Recommendations:</span> {pOsint[0].result_json.recommendations.join('; ')}</div>
+                              )}
+                              <p className="text-[10px] text-[#64748B] font-['JetBrains_Mono']">Run: {new Date(pOsint[0].created_at).toLocaleString()}</p>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Screening runs log */}
+              <div>
+                <h3 className="text-xs font-semibold text-[#64748B] uppercase tracking-wider mb-2">Screening Run History</h3>
+                {screeningRuns.map(run => (
+                  <Card key={run.id} className="border-[#E2E8F0] mb-2"><CardContent className="p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2"><Badge variant="outline" className="text-xs uppercase">{run.run_type}</Badge><Badge className={run.status === 'completed' ? 'bg-green-100 text-green-700 border-transparent' : run.status === 'error' ? 'bg-red-100 text-red-700 border-transparent' : 'bg-amber-100 text-amber-700 border-transparent'}>{run.status}</Badge><span className="text-xs text-[#64748B] font-['JetBrains_Mono']">{run.started_at?.slice(0,19)}</span></div>
+                      <span className="text-xs text-[#64748B]">{run.run_type === 'osint' ? run.parameters_json?.party_name : `Hits: ${run.parameters_json?.hits_count ?? '?'}`}</span>
+                    </div>
+                  </CardContent></Card>
+                ))}
+                {!screeningRuns.length && <p className="text-sm text-[#64748B] text-center py-4">No screening runs yet.</p>}
+              </div>
             </div>
           </TabsContent>
 
