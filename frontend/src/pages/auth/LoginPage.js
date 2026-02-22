@@ -97,7 +97,7 @@ export default function LoginPage() {
     const role = u?.global_role;
     if (role === 'END_CUSTOMER') navigate('/portal');
     else if (role === 'GLOBAL_SUPER_ADMIN') navigate('/admin');
-    else navigate('/workspace/cases');
+    else navigate('/workspace/intake');
   };
 
   // Group users by category
