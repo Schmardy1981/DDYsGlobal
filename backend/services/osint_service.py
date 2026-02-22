@@ -10,6 +10,36 @@ logger = logging.getLogger(__name__)
 
 LLM_KEY = os.environ.get('EMERGENT_LLM_KEY', '')
 
+DEFAULT_SYSTEM_PROMPT = """You are an OSINT and risk analysis expert for KYC/AML compliance.
+Analyze the provided entity information and generate a risk intelligence report.
+Return a JSON object with:
+- risk_indicators: list of risk indicators found
+- pep_likelihood: low/medium/high
+- adverse_media_summary: summary of any adverse media concerns
+- sanctions_risk: low/medium/high
+- country_risk: risk level of associated countries
+- recommendations: list of recommendations for the compliance team
+- overall_risk_assessment: low/medium/high with rationale
+Respond ONLY with valid JSON."""
+
+DEFAULT_USER_PROMPT = """Perform OSINT risk analysis for KYC compliance:
+
+Entity Name: {name}
+Entity Type: {party_type}
+Nationality: {nationality}
+Role in Case: {role_in_case}
+Addresses: {addresses}
+Identifiers: {identifiers}
+
+Analyze this entity for:
+1. PEP (Politically Exposed Person) indicators
+2. Adverse media and reputation risks
+3. Sanctions exposure
+4. Country/jurisdiction risks
+5. Overall risk profile
+
+Return ONLY valid JSON."""
+
 
 async def run_osint_analysis(db, case_id: str, party_id: str) -> dict:
     """Run OSINT/Risk analysis on a party using LLM."""
@@ -27,6 +57,21 @@ async def run_osint_analysis(db, case_id: str, party_id: str) -> dict:
     nationality = party.get("nationality", "Unknown")
     party_type = party.get("party_type", "unknown")
     
+    # Load custom prompts from DB
+    saved_prompts = await db.system_settings.find_one({"key": "prompts"}, {"_id": 0})
+    system_prompt = (saved_prompts or {}).get("osint_system", DEFAULT_SYSTEM_PROMPT)
+    user_prompt_template = (saved_prompts or {}).get("osint_user", DEFAULT_USER_PROMPT)
+    
+    # Fill template
+    user_prompt = user_prompt_template.format(
+        name=name,
+        party_type=party_type,
+        nationality=nationality,
+        role_in_case=party.get('role_in_case', 'unknown'),
+        addresses=party.get('addresses_json', {}),
+        identifiers=party.get('identifiers_json', {})
+    )
+    
     result = {}
     
     try:
@@ -35,39 +80,11 @@ async def run_osint_analysis(db, case_id: str, party_id: str) -> dict:
         chat = LlmChat(
             api_key=LLM_KEY,
             session_id=f"osint-{party_id}",
-            system_message="""You are an OSINT and risk analysis expert for KYC/AML compliance.
-Analyze the provided entity information and generate a risk intelligence report.
-Return a JSON object with:
-- risk_indicators: list of risk indicators found
-- pep_likelihood: low/medium/high
-- adverse_media_summary: summary of any adverse media concerns
-- sanctions_risk: low/medium/high
-- country_risk: risk level of associated countries
-- recommendations: list of recommendations for the compliance team
-- overall_risk_assessment: low/medium/high with rationale
-Respond ONLY with valid JSON."""
+            system_message=system_prompt
         )
         chat.with_model("anthropic", "claude-sonnet-4-5-20250929")
         
-        prompt = f"""Perform OSINT risk analysis for KYC compliance:
-
-Entity Name: {name}
-Entity Type: {party_type}
-Nationality: {nationality}
-Role in Case: {party.get('role_in_case', 'unknown')}
-Addresses: {party.get('addresses_json', {})}
-Identifiers: {party.get('identifiers_json', {})}
-
-Analyze this entity for:
-1. PEP (Politically Exposed Person) indicators
-2. Adverse media and reputation risks
-3. Sanctions exposure
-4. Country/jurisdiction risks
-5. Overall risk profile
-
-Return ONLY valid JSON."""
-        
-        response = await chat.send_message(UserMessage(text=prompt))
+        response = await chat.send_message(UserMessage(text=user_prompt))
         
         import json
         resp_text = str(response)
@@ -92,6 +109,7 @@ Return ONLY valid JSON."""
         "party_id": party_id,
         "tenant_id": case.get("tenant_id", ""),
         "analysis_type": "osint_risk",
+        "system_prompt_used": system_prompt[:200],
         "result_json": result,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
