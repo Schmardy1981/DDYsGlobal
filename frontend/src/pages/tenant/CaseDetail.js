@@ -704,3 +704,167 @@ function PersonCard({ party, requirements, documents, allDocs, onOsint, onViewDo
     </Card>
   );
 }
+
+
+function PartyEditForm({ party, onSave, onClose }) {
+  const [form, setForm] = useState({
+    party_type: party.party_type || 'natural_person',
+    role_in_case: party.role_in_case || '',
+    first_name: party.first_name || '',
+    last_name: party.last_name || '',
+    legal_name: party.legal_name || '',
+    dob: party.dob || '',
+    nationality: party.nationality || '',
+    ownership_percent: party.ownership_percent || '',
+    address: typeof party.addresses_json === 'object' ? Object.values(party.addresses_json)[0] || '' : '',
+    passport: party.identifiers_json?.passport || '',
+    national_id: party.identifiers_json?.national_id || '',
+    registration_number: party.identifiers_json?.registration_number || '',
+    lei: party.identifiers_json?.lei || '',
+  });
+
+  const handleSave = () => {
+    const addrKey = form.party_type === 'legal_entity' ? 'registered' : 'residential';
+    onSave({
+      party_type: form.party_type,
+      role_in_case: form.role_in_case,
+      first_name: form.first_name,
+      last_name: form.last_name,
+      legal_name: form.legal_name,
+      dob: form.dob || null,
+      nationality: form.nationality,
+      ownership_percent: form.ownership_percent ? parseFloat(form.ownership_percent) : null,
+      addresses_json: form.address ? { [addrKey]: form.address } : {},
+      identifiers_json: {
+        ...(form.passport && { passport: form.passport }),
+        ...(form.national_id && { national_id: form.national_id }),
+        ...(form.registration_number && { registration_number: form.registration_number }),
+        ...(form.lei && { lei: form.lei }),
+      }
+    });
+  };
+
+  const isCompany = form.party_type === 'legal_entity';
+  const s = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
+
+  return (
+    <div className="space-y-3 pt-2" data-testid="party-edit-form">
+      <div className="grid grid-cols-2 gap-3">
+        <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Type</Label>
+          <select className="mt-1 w-full h-9 rounded-md border border-input px-3 text-sm" value={form.party_type} onChange={e => s('party_type', e.target.value)}>
+            <option value="natural_person">Individual</option><option value="legal_entity">Company</option><option value="trust">Trust</option>
+          </select>
+        </div>
+        <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Role</Label>
+          <select className="mt-1 w-full h-9 rounded-md border border-input px-3 text-sm" value={form.role_in_case} onChange={e => s('role_in_case', e.target.value)}>
+            <option value="client">Client</option><option value="ubo">UBO</option><option value="director">Director</option><option value="signatory">Signatory</option><option value="beneficiary">Beneficiary</option>
+          </select>
+        </div>
+      </div>
+      {isCompany ? (
+        <>
+          <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Company Name</Label><Input className="mt-1" value={form.legal_name} onChange={e => s('legal_name', e.target.value)} /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Reg. Number</Label><Input className="mt-1" value={form.registration_number} onChange={e => s('registration_number', e.target.value)} /></div>
+            <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">LEI</Label><Input className="mt-1" value={form.lei} onChange={e => s('lei', e.target.value)} /></div>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">First Name</Label><Input className="mt-1" value={form.first_name} onChange={e => s('first_name', e.target.value)} /></div>
+            <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Last Name</Label><Input className="mt-1" value={form.last_name} onChange={e => s('last_name', e.target.value)} /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Date of Birth</Label><Input className="mt-1" type="date" value={form.dob} onChange={e => s('dob', e.target.value)} /></div>
+            <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Passport No.</Label><Input className="mt-1" value={form.passport} onChange={e => s('passport', e.target.value)} /></div>
+          </div>
+          <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">National ID</Label><Input className="mt-1" value={form.national_id} onChange={e => s('national_id', e.target.value)} /></div>
+        </>
+      )}
+      <div className="grid grid-cols-2 gap-3">
+        <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Nationality</Label><Input className="mt-1" value={form.nationality} onChange={e => s('nationality', e.target.value)} /></div>
+        <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Ownership %</Label><Input className="mt-1" type="number" value={form.ownership_percent} onChange={e => s('ownership_percent', e.target.value)} /></div>
+      </div>
+      <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Address</Label><Input className="mt-1" value={form.address} onChange={e => s('address', e.target.value)} /></div>
+      <div className="flex gap-2">
+        <Button className="flex-1 bg-[#0F172A] hover:bg-[#1E293B]" onClick={handleSave} data-testid="save-party-btn">Save</Button>
+        <Button variant="outline" onClick={onClose}>Cancel</Button>
+      </div>
+    </div>
+  );
+}
+
+function PartyAddForm({ parentId, defaultRole, onAdd, onClose }) {
+  const [form, setForm] = useState({
+    party_type: 'natural_person',
+    role_in_case: defaultRole || 'ubo',
+    first_name: '', last_name: '', legal_name: '',
+    dob: '', nationality: '', ownership_percent: '',
+    address: '', passport: '', registration_number: '',
+  });
+
+  const handleSubmit = () => {
+    const addrKey = form.party_type === 'legal_entity' ? 'registered' : 'residential';
+    onAdd({
+      party_type: form.party_type,
+      role_in_case: form.role_in_case,
+      first_name: form.first_name,
+      last_name: form.last_name,
+      legal_name: form.legal_name,
+      dob: form.dob || null,
+      nationality: form.nationality,
+      ownership_percent: form.ownership_percent ? parseFloat(form.ownership_percent) : null,
+      addresses_json: form.address ? { [addrKey]: form.address } : {},
+      identifiers_json: {
+        ...(form.passport && { passport: form.passport }),
+        ...(form.registration_number && { registration_number: form.registration_number }),
+      },
+      parent_party_id: parentId || null,
+    });
+  };
+
+  const isCompany = form.party_type === 'legal_entity';
+  const s = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
+
+  return (
+    <div className="space-y-3 pt-2" data-testid="party-add-form">
+      <div className="grid grid-cols-2 gap-3">
+        <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Type</Label>
+          <select className="mt-1 w-full h-9 rounded-md border border-input px-3 text-sm" value={form.party_type} onChange={e => s('party_type', e.target.value)}>
+            <option value="natural_person">Individual</option><option value="legal_entity">Company</option>
+          </select>
+        </div>
+        <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Role</Label>
+          <select className="mt-1 w-full h-9 rounded-md border border-input px-3 text-sm" value={form.role_in_case} onChange={e => s('role_in_case', e.target.value)}>
+            <option value="ubo">UBO</option><option value="director">Director</option><option value="signatory">Signatory</option><option value="client">Client</option>
+          </select>
+        </div>
+      </div>
+      {isCompany ? (
+        <>
+          <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Company Name</Label><Input className="mt-1" value={form.legal_name} onChange={e => s('legal_name', e.target.value)} placeholder="Company name" /></div>
+          <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Registration Number</Label><Input className="mt-1" value={form.registration_number} onChange={e => s('registration_number', e.target.value)} /></div>
+        </>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">First Name</Label><Input className="mt-1" value={form.first_name} onChange={e => s('first_name', e.target.value)} /></div>
+            <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Last Name</Label><Input className="mt-1" value={form.last_name} onChange={e => s('last_name', e.target.value)} /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">DOB</Label><Input className="mt-1" type="date" value={form.dob} onChange={e => s('dob', e.target.value)} /></div>
+            <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Passport</Label><Input className="mt-1" value={form.passport} onChange={e => s('passport', e.target.value)} /></div>
+          </div>
+        </>
+      )}
+      <div className="grid grid-cols-2 gap-3">
+        <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Nationality</Label><Input className="mt-1" value={form.nationality} onChange={e => s('nationality', e.target.value)} placeholder="DE" /></div>
+        <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Ownership %</Label><Input className="mt-1" type="number" value={form.ownership_percent} onChange={e => s('ownership_percent', e.target.value)} placeholder="25" /></div>
+      </div>
+      <div><Label className="text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Address</Label><Input className="mt-1" value={form.address} onChange={e => s('address', e.target.value)} placeholder="Full address" /></div>
+      <Button className="w-full bg-[#0F172A] hover:bg-[#1E293B]" onClick={handleSubmit} data-testid="add-party-btn">Add Party</Button>
+    </div>
+  );
+}
+
