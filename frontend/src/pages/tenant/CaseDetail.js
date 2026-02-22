@@ -4,19 +4,31 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Users, FileText, Search, Shield, Scale, CheckCircle, Clock, Download, Play, AlertTriangle, Mail, UserPlus, Send, Bell } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  ArrowLeft, Building2, User, Users, FileText, Search, Shield, Scale, CheckCircle, XCircle,
+  Clock, Download, Play, AlertTriangle, Mail, UserPlus, Send, Bell, Eye, MapPin, CreditCard,
+  Calendar, Globe, Percent, ChevronRight, CircleDot, File, Image, ExternalLink
+} from 'lucide-react';
 import api from '@/api/client';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const STATUS_COLORS = {
   missing: 'bg-gray-100 text-gray-700', submitted: 'bg-blue-100 text-blue-700', auto_passed: 'bg-green-100 text-green-700',
   needs_review: 'bg-amber-100 text-amber-700', rejected: 'bg-red-100 text-red-700', waived: 'bg-purple-100 text-purple-700', approved: 'bg-green-100 text-green-700'
 };
-
+const STATUS_ICONS = {
+  missing: CircleDot, submitted: Clock, auto_passed: CheckCircle, needs_review: Clock, rejected: XCircle, waived: Shield, approved: CheckCircle
+};
 const RISK_COLORS = { low: 'bg-green-100 text-green-700', medium: 'bg-amber-100 text-amber-700', high: 'bg-red-100 text-red-700' };
+const ROLE_COLORS = {
+  client: 'bg-blue-100 text-blue-700', ubo: 'bg-purple-100 text-purple-700', director: 'bg-teal-100 text-teal-700',
+  signatory: 'bg-indigo-100 text-indigo-700', trustee: 'bg-amber-100 text-amber-700', beneficiary: 'bg-green-100 text-green-700'
+};
 
 export default function CaseDetail() {
   const { caseId } = useParams();
@@ -24,12 +36,13 @@ export default function CaseDetail() {
   const [caseData, setCaseData] = useState(null);
   const [auditLogs, setAuditLogs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState('overview');
+  const [tab, setTab] = useState('dossier');
   const [showInvite, setShowInvite] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteResult, setInviteResult] = useState(null);
   const [reminders, setReminders] = useState([]);
   const [sendingReminder, setSendingReminder] = useState(false);
+  const [viewDoc, setViewDoc] = useState(null);
 
   useEffect(() => { loadCase(); }, [caseId]);
 
@@ -74,14 +87,14 @@ export default function CaseDetail() {
     try {
       await api.post('/screening/run', { case_id: caseId, run_type: runType });
       loadCase();
-    } catch (err) { alert(err.response?.data?.detail || 'Screening failed'); }
+    } catch (err) { alert(err.response?.data?.detail || 'Failed'); }
   };
 
   const handleRiskAssess = async () => {
     try {
       await api.post('/risk/assess', { case_id: caseId, inputs: {} });
       loadCase();
-    } catch (err) { alert(err.response?.data?.detail || 'Risk assessment failed'); }
+    } catch (err) { alert(err.response?.data?.detail || 'Failed'); }
   };
 
   const handleOsint = async (partyId) => {
@@ -89,24 +102,30 @@ export default function CaseDetail() {
       await api.post('/osint/analyze', { case_id: caseId, party_id: partyId });
       loadCase();
       alert('OSINT analysis complete');
-    } catch (err) { alert(err.response?.data?.detail || 'OSINT failed'); }
+    } catch (err) { alert(err.response?.data?.detail || 'Failed'); }
   };
 
   const handleExport = async () => {
     try {
       const res = await api.post(`/export/kyc/${caseId}`);
       alert(`Export created: ${res.data.filename}`);
-    } catch (err) { alert(err.response?.data?.detail || 'Export failed'); }
+    } catch (err) { alert(err.response?.data?.detail || 'Failed'); }
   };
 
   const handleRequirementUpdate = async (reqId, status) => {
     try {
       await api.put(`/cases/${caseId}/requirements/${reqId}`, { status });
       loadCase();
-    } catch (err) { alert(err.response?.data?.detail || 'Update failed'); }
+    } catch (err) { alert(err.response?.data?.detail || 'Failed'); }
   };
 
-  if (loading) return <div className="text-sm text-[#64748B]">Loading case...</div>;
+  const openDocViewer = (doc) => {
+    const token = localStorage.getItem('ddys_token');
+    const url = `${BACKEND_URL}/api/documents/view/${doc.id}`;
+    window.open(url + `?token=${token}`, '_blank');
+  };
+
+  if (loading) return <div className="text-sm text-[#64748B] flex items-center justify-center h-64">Loading case...</div>;
   if (!caseData) return <div className="text-sm text-red-600">Case not found</div>;
 
   const c = caseData;
@@ -118,306 +137,463 @@ export default function CaseDetail() {
   const approvalTasks = c.approval_tasks || [];
   const waivers = c.waivers || [];
 
+  // Organize parties
+  const clientParty = parties.find(p => p.role_in_case === 'client');
+  const ubos = parties.filter(p => p.role_in_case === 'ubo');
+  const directors = parties.filter(p => ['director', 'signatory'].includes(p.role_in_case));
+  const otherParties = parties.filter(p => !['client', 'ubo', 'director', 'signatory'].includes(p.role_in_case));
+
+  // Requirement stats
+  const reqStats = {};
+  requirements.forEach(r => { reqStats[r.status] = (reqStats[r.status] || 0) + 1; });
+  const totalReqs = requirements.length;
+  const doneReqs = (reqStats.approved || 0) + (reqStats.auto_passed || 0) + (reqStats.waived || 0);
+  const progress = totalReqs > 0 ? Math.round((doneReqs / totalReqs) * 100) : 0;
+
   const nextTransitions = {
-    draft: ['customer_in_progress'],
-    customer_in_progress: ['customer_submitted'],
-    customer_submitted: ['automated_checks'],
-    automated_checks: ['maker_review'],
-    maker_review: ['checker_review'],
-    checker_review: ['business_approval', 'compliance_approval', 'completed'],
+    draft: ['customer_in_progress'], customer_in_progress: ['customer_submitted'],
+    customer_submitted: ['automated_checks'], automated_checks: ['maker_review'],
+    maker_review: ['checker_review'], checker_review: ['business_approval', 'compliance_approval', 'completed'],
     business_approval: ['compliance_approval', 'mlro_approval', 'completed'],
-    compliance_approval: ['mlro_approval', 'completed'],
-    mlro_approval: ['completed'],
+    compliance_approval: ['mlro_approval', 'completed'], mlro_approval: ['completed'],
   };
 
+  // Helper: get requirements + docs for a party
+  const getPartyReqs = (partyId) => requirements.filter(r => r.party_id === partyId);
+  const getPartyDocs = (partyId) => documents.filter(d => d.party_id === partyId);
+  const getDocForReq = (reqId) => documents.find(d => d.requirement_item_id === reqId);
+
   return (
-    <div data-testid="case-detail">
-      <div className="flex items-center gap-3 mb-6">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/workspace/cases')} data-testid="back-to-cases"><ArrowLeft size={16} /></Button>
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold tracking-tight font-['IBM_Plex_Sans']">{c.case_ref}</h1>
-            <Badge className={`${STATUS_COLORS[c.status] || 'bg-gray-100'} border-transparent`}>{c.status?.replace(/_/g, ' ')}</Badge>
-            {c.risk_rating && <Badge className={`${RISK_COLORS[c.risk_rating]} border-transparent capitalize`}>{c.risk_rating}</Badge>}
-            {c.due_diligence_level && <Badge variant="outline" className="text-xs uppercase">{c.due_diligence_level}</Badge>}
-          </div>
-          <p className="text-sm text-[#64748B] mt-1">{c.case_type?.replace(/_/g, ' ')} | {c.jurisdiction} | {c.product_scope || 'N/A'}</p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Dialog open={showInvite} onOpenChange={setShowInvite}>
-            <DialogTrigger asChild>
-              <Button size="sm" variant="outline" data-testid="invite-customer-btn"><UserPlus size={14} className="mr-1" /> Invite Customer</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader><DialogTitle>Invite Customer</DialogTitle></DialogHeader>
-              <div className="space-y-4 pt-2">
-                <p className="text-sm text-[#64748B]">Send a secure invitation link to the customer to complete their KYC documentation.</p>
-                <div>
-                  <Label className="text-xs uppercase tracking-wider font-semibold text-[#64748B]">Customer Email</Label>
-                  <Input className="mt-1.5" type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder="customer@example.com" data-testid="invite-email-input" />
-                </div>
-                {inviteResult && (
-                  <div className="p-3 bg-green-50 border border-green-200 rounded-md">
-                    <p className="text-sm text-green-700">{inviteResult.message}</p>
-                    <p className="text-xs font-['JetBrains_Mono'] mt-1 text-green-600">Link: {window.location.origin}{inviteResult.invite_url}</p>
-                  </div>
-                )}
-                <Button className="w-full bg-[#0F172A] hover:bg-[#1E293B]" onClick={handleInviteCustomer} disabled={!inviteEmail} data-testid="send-invite-btn">
-                  <Send size={14} className="mr-1" /> Send Invitation
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-          <Button size="sm" variant="outline" onClick={handleSendReminder} disabled={sendingReminder} data-testid="send-reminder-btn">
-            <Bell size={14} className="mr-1" /> {sendingReminder ? 'Sending...' : 'Send Reminder'}
-          </Button>
-          {(nextTransitions[c.status] || []).map(t => (
-            <Button key={t} size="sm" variant="outline" onClick={() => handleTransition(t)} data-testid={`transition-${t}`}>
-              {t.replace(/_/g, ' ')}
-            </Button>
-          ))}
-          <Button size="sm" variant="outline" onClick={handleExport} data-testid="export-kyc-btn"><Download size={14} className="mr-1" /> Export KYC</Button>
-        </div>
-      </div>
-
-      <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="mb-4">
-          <TabsTrigger value="overview" data-testid="tab-overview">Overview</TabsTrigger>
-          <TabsTrigger value="parties" data-testid="tab-parties">Parties ({parties.length})</TabsTrigger>
-          <TabsTrigger value="requirements" data-testid="tab-requirements">Requirements ({requirements.length})</TabsTrigger>
-          <TabsTrigger value="documents" data-testid="tab-documents">Documents ({documents.length})</TabsTrigger>
-          <TabsTrigger value="screening" data-testid="tab-screening">Screening</TabsTrigger>
-          <TabsTrigger value="risk" data-testid="tab-risk">Risk</TabsTrigger>
-          <TabsTrigger value="approvals" data-testid="tab-approvals">Approvals</TabsTrigger>
-          <TabsTrigger value="audit" data-testid="tab-audit">Audit Log</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <Card className="border-[#E2E8F0]"><CardHeader className="pb-2"><CardTitle className="text-sm font-['IBM_Plex_Sans']">Requirements Summary</CardTitle></CardHeader>
-              <CardContent>
-                {['missing','submitted','auto_passed','needs_review','approved','waived','rejected'].map(s => {
-                  const count = requirements.filter(r => r.status === s).length;
-                  return count > 0 ? <div key={s} className="flex justify-between py-1"><span className="text-xs text-[#64748B] capitalize">{s.replace(/_/g,' ')}</span><Badge className={`${STATUS_COLORS[s]} border-transparent text-xs`}>{count}</Badge></div> : null;
-                })}
-              </CardContent>
-            </Card>
-            <Card className="border-[#E2E8F0]"><CardHeader className="pb-2"><CardTitle className="text-sm font-['IBM_Plex_Sans']">Parties</CardTitle></CardHeader>
-              <CardContent>
-                {parties.map(p => (
-                  <div key={p.id} className="flex justify-between py-1">
-                    <span className="text-sm">{p.legal_name || `${p.first_name} ${p.last_name}`}</span>
-                    <Badge variant="outline" className="text-xs capitalize">{p.role_in_case}</Badge>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-            <Card className="border-[#E2E8F0]"><CardHeader className="pb-2"><CardTitle className="text-sm font-['IBM_Plex_Sans']">Key Dates</CardTitle></CardHeader>
-              <CardContent className="space-y-1">
-                <div className="flex justify-between py-1"><span className="text-xs text-[#64748B]">Created</span><span className="text-xs font-['JetBrains_Mono']">{c.created_at?.slice(0,10)}</span></div>
-                <div className="flex justify-between py-1"><span className="text-xs text-[#64748B]">Last Action</span><span className="text-xs font-['JetBrains_Mono']">{c.last_action_at?.slice(0,10)}</span></div>
-                <div className="flex justify-between py-1"><span className="text-xs text-[#64748B]">NRD</span><span className="text-xs font-['JetBrains_Mono']">{c.nrd_date?.slice(0,10) || 'Not set'}</span></div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="parties">
-          <div className="space-y-3">
-            {parties.map(p => (
-              <Card key={p.id} className="border-[#E2E8F0]">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">{p.legal_name || `${p.first_name} ${p.last_name}`}</span>
-                        <Badge variant="outline" className="text-xs capitalize">{p.role_in_case}</Badge>
-                        <Badge variant="outline" className="text-xs">{p.party_type?.replace(/_/g, ' ')}</Badge>
-                      </div>
-                      <div className="flex gap-4 mt-1 text-xs text-[#64748B]">
-                        {p.nationality && <span>Nationality: {p.nationality}</span>}
-                        {p.dob && <span>DOB: {p.dob}</span>}
-                        {p.ownership_percent && <span>Ownership: {p.ownership_percent}%</span>}
-                      </div>
-                    </div>
-                    <Button size="sm" variant="outline" onClick={() => handleOsint(p.id)} data-testid={`osint-${p.id}`}>
-                      <Search size={14} className="mr-1" /> OSINT
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="requirements">
-          <div className="bg-white border border-[#E2E8F0] rounded-md overflow-hidden">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b bg-[#F8FAFC]">
-                  <th className="h-10 px-4 text-left text-[11px] uppercase tracking-wider font-semibold text-[#64748B]">Requirement</th>
-                  <th className="h-10 px-4 text-left text-[11px] uppercase tracking-wider font-semibold text-[#64748B]">Category</th>
-                  <th className="h-10 px-4 text-left text-[11px] uppercase tracking-wider font-semibold text-[#64748B]">Status</th>
-                  <th className="h-10 px-4 text-left text-[11px] uppercase tracking-wider font-semibold text-[#64748B]">Source</th>
-                  <th className="h-10 px-4 text-left text-[11px] uppercase tracking-wider font-semibold text-[#64748B]">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {requirements.map(r => (
-                  <tr key={r.id} className="border-b hover:bg-[#F8FAFC]">
-                    <td className="px-4 py-3 text-sm">{r.requirement_label || r.requirement_key}</td>
-                    <td className="px-4 py-3"><Badge variant="outline" className="text-xs">{r.requirement_category}</Badge></td>
-                    <td className="px-4 py-3"><Badge className={`${STATUS_COLORS[r.status] || ''} border-transparent text-xs`}>{r.status?.replace(/_/g,' ')}</Badge></td>
-                    <td className="px-4 py-3 text-xs text-[#64748B] uppercase">{r.rule_source}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex gap-1">
-                        {r.status === 'needs_review' && (
-                          <>
-                            <Button size="sm" variant="ghost" className="h-7 text-xs text-green-600" onClick={() => handleRequirementUpdate(r.id, 'approved')}>Approve</Button>
-                            <Button size="sm" variant="ghost" className="h-7 text-xs text-red-600" onClick={() => handleRequirementUpdate(r.id, 'rejected')}>Reject</Button>
-                          </>
-                        )}
-                        {r.status === 'submitted' && (
-                          <Button size="sm" variant="ghost" className="h-7 text-xs text-green-600" onClick={() => handleRequirementUpdate(r.id, 'approved')}>Approve</Button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="documents">
-          <div className="bg-white border border-[#E2E8F0] rounded-md overflow-hidden">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b bg-[#F8FAFC]">
-                  <th className="h-10 px-4 text-left text-[11px] uppercase tracking-wider font-semibold text-[#64748B]">Filename</th>
-                  <th className="h-10 px-4 text-left text-[11px] uppercase tracking-wider font-semibold text-[#64748B]">Type</th>
-                  <th className="h-10 px-4 text-left text-[11px] uppercase tracking-wider font-semibold text-[#64748B]">Status</th>
-                  <th className="h-10 px-4 text-left text-[11px] uppercase tracking-wider font-semibold text-[#64748B]">Uploaded</th>
-                </tr>
-              </thead>
-              <tbody>
-                {documents.map(d => (
-                  <tr key={d.id} className="border-b hover:bg-[#F8FAFC]">
-                    <td className="px-4 py-3 text-sm font-['JetBrains_Mono']">{d.original_filename}</td>
-                    <td className="px-4 py-3"><Badge variant="outline" className="text-xs">{d.doc_type}</Badge></td>
-                    <td className="px-4 py-3"><Badge className={`${STATUS_COLORS[d.status] || 'bg-gray-100'} border-transparent text-xs`}>{d.status}</Badge></td>
-                    <td className="px-4 py-3 text-xs font-['JetBrains_Mono'] text-[#64748B]">{d.created_at?.slice(0,10)}</td>
-                  </tr>
-                ))}
-                {!documents.length && <tr><td colSpan={4} className="px-4 py-8 text-center text-sm text-[#64748B]">No documents uploaded yet</td></tr>}
-              </tbody>
-            </table>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="screening">
-          <div className="space-y-4">
-            <div className="flex gap-2">
-              <Button size="sm" onClick={() => handleScreening('sanctions')} data-testid="run-sanctions"><Shield size={14} className="mr-1" /> Run Sanctions</Button>
-              <Button size="sm" onClick={() => handleScreening('pep')} data-testid="run-pep"><Users size={14} className="mr-1" /> Run PEP</Button>
-              <Button size="sm" onClick={() => handleScreening('adverse_media')} data-testid="run-adverse"><AlertTriangle size={14} className="mr-1" /> Run Adverse Media</Button>
+    <TooltipProvider>
+      <div data-testid="case-detail">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-4">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/workspace/cases')} data-testid="back-to-cases"><ArrowLeft size={16} /></Button>
+          <div className="flex-1">
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-semibold tracking-tight font-['IBM_Plex_Sans']">{c.case_ref}</h1>
+              <Badge className={`${STATUS_COLORS[c.status] || 'bg-gray-100'} border-transparent`}>{c.status?.replace(/_/g, ' ')}</Badge>
+              {c.risk_rating && <Badge className={`${RISK_COLORS[c.risk_rating]} border-transparent capitalize`}>{c.risk_rating}</Badge>}
+              {c.due_diligence_level && <Badge variant="outline" className="text-xs uppercase">{c.due_diligence_level}</Badge>}
             </div>
-            {screeningRuns.map(run => (
-              <Card key={run.id} className="border-[#E2E8F0]">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-xs uppercase">{run.run_type}</Badge>
-                      <Badge className={run.status === 'completed' ? 'bg-green-100 text-green-700 border-transparent' : 'bg-amber-100 text-amber-700 border-transparent'}>{run.status}</Badge>
-                      <span className="text-xs text-[#64748B] font-['JetBrains_Mono']">{run.started_at?.slice(0,19)}</span>
+            <p className="text-sm text-[#64748B] mt-0.5">{c.case_type?.replace(/_/g, ' ')} | {c.jurisdiction} | {c.product_scope || 'N/A'}</p>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Dialog open={showInvite} onOpenChange={setShowInvite}>
+              <DialogTrigger asChild><Button size="sm" variant="outline" data-testid="invite-customer-btn"><UserPlus size={14} className="mr-1" /> Invite</Button></DialogTrigger>
+              <DialogContent>
+                <DialogHeader><DialogTitle>Invite Customer</DialogTitle></DialogHeader>
+                <div className="space-y-4 pt-2">
+                  <p className="text-sm text-[#64748B]">Send a secure KYC portal link to the customer.</p>
+                  <div><Label className="text-xs uppercase tracking-wider font-semibold text-[#64748B]">Email</Label>
+                  <Input className="mt-1.5" type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder="customer@example.com" data-testid="invite-email-input" /></div>
+                  {inviteResult && <div className="p-3 bg-green-50 border border-green-200 rounded-md text-sm text-green-700">{inviteResult.message}<br/><span className="font-['JetBrains_Mono'] text-xs">{window.location.origin}{inviteResult.invite_url}</span></div>}
+                  <Button className="w-full bg-[#0F172A] hover:bg-[#1E293B]" onClick={handleInviteCustomer} disabled={!inviteEmail} data-testid="send-invite-btn"><Send size={14} className="mr-1" /> Send</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+            <Button size="sm" variant="outline" onClick={handleSendReminder} disabled={sendingReminder} data-testid="send-reminder-btn"><Bell size={14} className="mr-1" /> Remind</Button>
+            {(nextTransitions[c.status] || []).map(t => (
+              <Button key={t} size="sm" variant="outline" onClick={() => handleTransition(t)} data-testid={`transition-${t}`}>{t.replace(/_/g, ' ')}</Button>
+            ))}
+            <Button size="sm" variant="outline" onClick={handleExport} data-testid="export-kyc-btn"><Download size={14} className="mr-1" /> Export</Button>
+          </div>
+        </div>
+
+        {/* Progress bar */}
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex-1 h-2 bg-gray-200 rounded-full"><div className="h-2 bg-[#0F172A] rounded-full transition-all" style={{ width: `${progress}%` }} /></div>
+          <span className="text-xs font-['JetBrains_Mono'] text-[#64748B] shrink-0">{doneReqs}/{totalReqs} requirements done</span>
+        </div>
+
+        <Tabs value={tab} onValueChange={setTab}>
+          <TabsList className="mb-4">
+            <TabsTrigger value="dossier" data-testid="tab-dossier">Dossier</TabsTrigger>
+            <TabsTrigger value="status" data-testid="tab-status">Document Status</TabsTrigger>
+            <TabsTrigger value="structure" data-testid="tab-structure">Company Structure</TabsTrigger>
+            <TabsTrigger value="screening" data-testid="tab-screening">Screening</TabsTrigger>
+            <TabsTrigger value="risk" data-testid="tab-risk">Risk</TabsTrigger>
+            <TabsTrigger value="approvals" data-testid="tab-approvals">Approvals</TabsTrigger>
+            <TabsTrigger value="audit" data-testid="tab-audit">Audit</TabsTrigger>
+          </TabsList>
+
+          {/* ===== TAB: DOSSIER (One-Pager) ===== */}
+          <TabsContent value="dossier">
+            <div className="space-y-4">
+              {/* Client / Company */}
+              {clientParty && (
+                <Card className="border-[#E2E8F0] border-l-4 border-l-blue-500">
+                  <CardContent className="p-5">
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+                        {clientParty.party_type === 'legal_entity' ? <Building2 size={24} className="text-blue-600" /> : <User size={24} className="text-blue-600" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h2 className="text-lg font-semibold font-['IBM_Plex_Sans']">{clientParty.legal_name || `${clientParty.first_name} ${clientParty.last_name}`}</h2>
+                          <Badge className="bg-blue-100 text-blue-700 border-transparent">Client</Badge>
+                          <Badge variant="outline" className="text-xs">{clientParty.party_type?.replace(/_/g, ' ')}</Badge>
+                        </div>
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                          {clientParty.nationality && <InfoField icon={Globe} label="Nationality" value={clientParty.nationality} />}
+                          {clientParty.dob && <InfoField icon={Calendar} label="Date of Birth" value={clientParty.dob} />}
+                          {clientParty.identifiers_json?.registration_number && <InfoField icon={CreditCard} label="Reg. Number" value={clientParty.identifiers_json.registration_number} />}
+                          {clientParty.identifiers_json?.lei && <InfoField icon={CreditCard} label="LEI" value={clientParty.identifiers_json.lei} />}
+                          {clientParty.identifiers_json?.passport && <InfoField icon={CreditCard} label="Passport" value={clientParty.identifiers_json.passport} />}
+                          {typeof clientParty.addresses_json === 'object' && Object.entries(clientParty.addresses_json).map(([k, v]) => (
+                            <InfoField key={k} icon={MapPin} label={k} value={String(v)} />
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                    <span className="text-xs text-[#64748B]">Hits: {run.parameters_json?.hits_count ?? '?'}</span>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* UBOs */}
+              {ubos.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold text-[#64748B] uppercase tracking-wider mb-2 flex items-center gap-2"><Users size={14} /> Ultimate Beneficial Owners ({ubos.length})</h3>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                    {ubos.map(p => <PersonCard key={p.id} party={p} requirements={getPartyReqs(p.id)} documents={getPartyDocs(p.id)} allDocs={documents} onOsint={() => handleOsint(p.id)} onViewDoc={openDocViewer} getDocForReq={getDocForReq} />)}
+                  </div>
+                </div>
+              )}
+
+              {/* Directors */}
+              {directors.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold text-[#64748B] uppercase tracking-wider mb-2 flex items-center gap-2"><User size={14} /> Directors & Signatories ({directors.length})</h3>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                    {directors.map(p => <PersonCard key={p.id} party={p} requirements={getPartyReqs(p.id)} documents={getPartyDocs(p.id)} allDocs={documents} onOsint={() => handleOsint(p.id)} onViewDoc={openDocViewer} getDocForReq={getDocForReq} />)}
+                  </div>
+                </div>
+              )}
+
+              {/* Other parties */}
+              {otherParties.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold text-[#64748B] uppercase tracking-wider mb-2">Other Parties ({otherParties.length})</h3>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                    {otherParties.map(p => <PersonCard key={p.id} party={p} requirements={getPartyReqs(p.id)} documents={getPartyDocs(p.id)} allDocs={documents} onOsint={() => handleOsint(p.id)} onViewDoc={openDocViewer} getDocForReq={getDocForReq} />)}
+                  </div>
+                </div>
+              )}
+
+              {/* Key dates */}
+              <Card className="border-[#E2E8F0]">
+                <CardContent className="p-4">
+                  <h3 className="text-xs font-semibold text-[#64748B] uppercase tracking-wider mb-2">Key Dates & Case Info</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <InfoField icon={Calendar} label="Created" value={c.created_at?.slice(0,10)} />
+                    <InfoField icon={Clock} label="Last Action" value={c.last_action_at?.slice(0,10)} />
+                    <InfoField icon={Calendar} label="NRD" value={c.nrd_date?.slice(0,10) || 'Not set'} />
+                    <InfoField icon={Globe} label="Jurisdiction" value={c.jurisdiction} />
                   </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        </TabsContent>
+            </div>
+          </TabsContent>
 
-        <TabsContent value="risk">
-          <div className="space-y-4">
-            <Button size="sm" onClick={handleRiskAssess} data-testid="run-risk-assess"><Scale size={14} className="mr-1" /> Run Risk Assessment</Button>
-            {riskAssessments.map(ra => (
-              <Card key={ra.id} className="border-[#E2E8F0]">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-2">
-                    <Badge className={`${RISK_COLORS[ra.computed_rating] || ''} border-transparent capitalize text-sm`}>{ra.computed_rating}</Badge>
-                    <span className="text-sm font-['JetBrains_Mono']">Score: {ra.computed_score}</span>
-                    <Badge variant="outline" className="uppercase text-xs">{ra.due_diligence_level}</Badge>
-                    {ra.challenged && <Badge className="bg-amber-100 text-amber-700 border-transparent">Challenged</Badge>}
+          {/* ===== TAB: DOCUMENT STATUS (One-Pager) ===== */}
+          <TabsContent value="status">
+            <div className="space-y-6">
+              {parties.map(party => {
+                const partyReqs = getPartyReqs(party.id);
+                if (!partyReqs.length) return null;
+                const pName = party.legal_name || `${party.first_name} ${party.last_name}`.trim();
+                const done = partyReqs.filter(r => ['approved','auto_passed','waived'].includes(r.status)).length;
+
+                return (
+                  <div key={party.id}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="text-sm font-semibold">{pName}</h3>
+                      <Badge className={`${ROLE_COLORS[party.role_in_case] || 'bg-gray-100'} border-transparent text-[10px] capitalize`}>{party.role_in_case}</Badge>
+                      <span className="text-xs text-[#64748B] font-['JetBrains_Mono']">{done}/{partyReqs.length}</span>
+                    </div>
+                    <div className="bg-white border border-[#E2E8F0] rounded-md overflow-hidden">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b bg-[#F8FAFC]">
+                            <th className="h-8 px-3 text-left text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Requirement</th>
+                            <th className="h-8 px-3 text-left text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Status</th>
+                            <th className="h-8 px-3 text-left text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Document</th>
+                            <th className="h-8 px-3 text-left text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Feedback</th>
+                            <th className="h-8 px-3 text-left text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {partyReqs.map(r => {
+                            const Icon = STATUS_ICONS[r.status] || CircleDot;
+                            const doc = getDocForReq(r.id);
+                            return (
+                              <tr key={r.id} className="border-b hover:bg-[#F8FAFC]">
+                                <td className="px-3 py-2 text-sm">{r.requirement_label || r.requirement_key}</td>
+                                <td className="px-3 py-2"><div className="flex items-center gap-1.5"><Icon size={14} className={STATUS_COLORS[r.status]?.replace('bg-', 'text-').replace('100', '600').replace(' text-', ' ').split(' ')[0] || 'text-gray-400'} /><Badge className={`${STATUS_COLORS[r.status]} border-transparent text-[10px]`}>{r.status?.replace(/_/g,' ')}</Badge></div></td>
+                                <td className="px-3 py-2">{doc ? (
+                                  <button onClick={() => openDocViewer(doc)} className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 hover:underline" data-testid={`view-doc-${doc.id}`}>
+                                    <File size={12} /> {doc.original_filename?.slice(0,25)}{doc.original_filename?.length > 25 ? '...' : ''}
+                                  </button>
+                                ) : <span className="text-xs text-[#64748B]">-</span>}</td>
+                                <td className="px-3 py-2 text-xs text-[#64748B] max-w-xs truncate">{r.notes || '-'}</td>
+                                <td className="px-3 py-2">
+                                  <div className="flex gap-1">
+                                    {r.status === 'needs_review' && <>
+                                      <Button size="sm" variant="ghost" className="h-6 text-[10px] text-green-600 px-2" onClick={() => handleRequirementUpdate(r.id, 'approved')}>Approve</Button>
+                                      <Button size="sm" variant="ghost" className="h-6 text-[10px] text-red-600 px-2" onClick={() => handleRequirementUpdate(r.id, 'rejected')}>Reject</Button>
+                                    </>}
+                                    {r.status === 'submitted' && <Button size="sm" variant="ghost" className="h-6 text-[10px] text-green-600 px-2" onClick={() => handleRequirementUpdate(r.id, 'approved')}>Approve</Button>}
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
-                  <div className="text-xs text-[#64748B]">
-                    Methodology: {ra.methodology} | Created: {ra.created_at?.slice(0,10)}
-                  </div>
-                  {Object.entries(ra.per_se_flags_json || {}).some(([,v]) => v) && (
-                    <div className="mt-2 flex gap-1">
-                      {Object.entries(ra.per_se_flags_json || {}).filter(([,v]) => v).map(([k]) => (
-                        <Badge key={k} className="bg-red-100 text-red-700 border-transparent text-xs">{k.replace(/_/g,' ')}</Badge>
-                      ))}
+                );
+              })}
+            </div>
+          </TabsContent>
+
+          {/* ===== TAB: COMPANY STRUCTURE ===== */}
+          <TabsContent value="structure">
+            <Card className="border-[#E2E8F0]">
+              <CardContent className="p-6">
+                <h3 className="text-sm font-semibold text-[#64748B] uppercase tracking-wider mb-6">Ownership & Control Structure</h3>
+                {/* Visual org chart */}
+                <div className="flex flex-col items-center">
+                  {/* Company at top */}
+                  {clientParty && (
+                    <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-4 text-center mb-2 min-w-[280px]" data-testid="structure-client">
+                      <Building2 size={24} className="mx-auto text-blue-600 mb-1" />
+                      <p className="text-sm font-semibold">{clientParty.legal_name || `${clientParty.first_name} ${clientParty.last_name}`}</p>
+                      <p className="text-[10px] text-[#64748B]">{clientParty.party_type?.replace(/_/g, ' ')} | {clientParty.nationality}</p>
+                      {clientParty.identifiers_json?.registration_number && <p className="text-[10px] font-['JetBrains_Mono'] text-[#64748B]">Reg: {clientParty.identifiers_json.registration_number}</p>}
                     </div>
                   )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
 
-        <TabsContent value="approvals">
-          <div className="bg-white border border-[#E2E8F0] rounded-md overflow-hidden">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b bg-[#F8FAFC]">
-                  <th className="h-10 px-4 text-left text-[11px] uppercase tracking-wider font-semibold text-[#64748B]">Task Type</th>
-                  <th className="h-10 px-4 text-left text-[11px] uppercase tracking-wider font-semibold text-[#64748B]">Status</th>
-                  <th className="h-10 px-4 text-left text-[11px] uppercase tracking-wider font-semibold text-[#64748B]">Decision</th>
-                  <th className="h-10 px-4 text-left text-[11px] uppercase tracking-wider font-semibold text-[#64748B]">Created</th>
-                </tr>
-              </thead>
-              <tbody>
+                  {/* Connector lines */}
+                  {(ubos.length > 0 || directors.length > 0) && <div className="w-0.5 h-8 bg-[#CBD5E1]" />}
+
+                  {/* UBOs row */}
+                  {ubos.length > 0 && (
+                    <div className="mb-6 w-full">
+                      <p className="text-center text-[10px] text-[#64748B] uppercase tracking-wider mb-3">Beneficial Owners</p>
+                      <div className="flex justify-center gap-4 flex-wrap">
+                        {ubos.map(p => {
+                          const pReqs = getPartyReqs(p.id);
+                          const pDone = pReqs.filter(r => ['approved','auto_passed','waived'].includes(r.status)).length;
+                          return (
+                            <div key={p.id} className="bg-purple-50 border-2 border-purple-300 rounded-lg p-3 text-center min-w-[200px] relative" data-testid={`structure-ubo-${p.id}`}>
+                              <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-0.5 h-3 bg-[#CBD5E1]" />
+                              <User size={20} className="mx-auto text-purple-600 mb-1" />
+                              <p className="text-sm font-semibold">{p.first_name} {p.last_name}</p>
+                              {p.ownership_percent && (
+                                <div className="flex items-center justify-center gap-1 mt-1">
+                                  <Percent size={12} className="text-purple-600" />
+                                  <span className="text-lg font-bold font-['JetBrains_Mono'] text-purple-700">{p.ownership_percent}%</span>
+                                </div>
+                              )}
+                              <div className="text-[10px] text-[#64748B] mt-1 space-y-0.5">
+                                {p.nationality && <p>Nationality: {p.nationality}</p>}
+                                {p.dob && <p>DOB: {p.dob}</p>}
+                              </div>
+                              <div className="mt-2 flex items-center justify-center gap-1">
+                                <div className="w-12 h-1.5 bg-gray-200 rounded-full"><div className="h-1.5 bg-purple-500 rounded-full" style={{ width: `${pReqs.length ? (pDone/pReqs.length)*100 : 0}%` }} /></div>
+                                <span className="text-[9px] text-[#64748B]">{pDone}/{pReqs.length}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Directors row */}
+                  {directors.length > 0 && (
+                    <div className="w-full">
+                      <p className="text-center text-[10px] text-[#64748B] uppercase tracking-wider mb-3">Directors & Signatories</p>
+                      <div className="flex justify-center gap-4 flex-wrap">
+                        {directors.map(p => {
+                          const pReqs = getPartyReqs(p.id);
+                          const pDone = pReqs.filter(r => ['approved','auto_passed','waived'].includes(r.status)).length;
+                          return (
+                            <div key={p.id} className="bg-teal-50 border-2 border-teal-300 rounded-lg p-3 text-center min-w-[200px]" data-testid={`structure-director-${p.id}`}>
+                              <User size={20} className="mx-auto text-teal-600 mb-1" />
+                              <p className="text-sm font-semibold">{p.first_name} {p.last_name}</p>
+                              <Badge className="bg-teal-100 text-teal-700 border-transparent text-[9px] mt-1">{p.role_in_case}</Badge>
+                              <div className="text-[10px] text-[#64748B] mt-1">
+                                {p.nationality && <p>Nationality: {p.nationality}</p>}
+                              </div>
+                              <div className="mt-2 flex items-center justify-center gap-1">
+                                <div className="w-12 h-1.5 bg-gray-200 rounded-full"><div className="h-1.5 bg-teal-500 rounded-full" style={{ width: `${pReqs.length ? (pDone/pReqs.length)*100 : 0}%` }} /></div>
+                                <span className="text-[9px] text-[#64748B]">{pDone}/{pReqs.length}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ===== TAB: SCREENING ===== */}
+          <TabsContent value="screening">
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                <Button size="sm" onClick={() => handleScreening('sanctions')} data-testid="run-sanctions"><Shield size={14} className="mr-1" /> Sanctions</Button>
+                <Button size="sm" onClick={() => handleScreening('pep')} data-testid="run-pep"><Users size={14} className="mr-1" /> PEP</Button>
+                <Button size="sm" onClick={() => handleScreening('adverse_media')} data-testid="run-adverse"><AlertTriangle size={14} className="mr-1" /> Adverse Media</Button>
+              </div>
+              {screeningRuns.map(run => (
+                <Card key={run.id} className="border-[#E2E8F0]"><CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2"><Badge variant="outline" className="text-xs uppercase">{run.run_type}</Badge><Badge className={run.status === 'completed' ? 'bg-green-100 text-green-700 border-transparent' : 'bg-amber-100 text-amber-700 border-transparent'}>{run.status}</Badge><span className="text-xs text-[#64748B] font-['JetBrains_Mono']">{run.started_at?.slice(0,19)}</span></div>
+                    <span className="text-xs text-[#64748B]">Hits: {run.parameters_json?.hits_count ?? '?'}</span>
+                  </div>
+                </CardContent></Card>
+              ))}
+              {!screeningRuns.length && <p className="text-sm text-[#64748B] text-center py-8">No screening runs yet. Use the buttons above to run checks.</p>}
+            </div>
+          </TabsContent>
+
+          {/* ===== TAB: RISK ===== */}
+          <TabsContent value="risk">
+            <div className="space-y-4">
+              <Button size="sm" onClick={handleRiskAssess} data-testid="run-risk-assess"><Scale size={14} className="mr-1" /> Run Risk Assessment</Button>
+              {riskAssessments.map(ra => (
+                <Card key={ra.id} className="border-[#E2E8F0]"><CardContent className="p-4">
+                  <div className="flex items-center gap-3 mb-2"><Badge className={`${RISK_COLORS[ra.computed_rating] || ''} border-transparent capitalize text-sm`}>{ra.computed_rating}</Badge><span className="text-sm font-['JetBrains_Mono']">Score: {ra.computed_score}</span><Badge variant="outline" className="uppercase text-xs">{ra.due_diligence_level}</Badge>{ra.challenged && <Badge className="bg-amber-100 text-amber-700 border-transparent">Challenged</Badge>}</div>
+                  <div className="text-xs text-[#64748B]">Methodology: {ra.methodology} | {ra.created_at?.slice(0,10)}</div>
+                  {Object.entries(ra.per_se_flags_json || {}).some(([,v]) => v) && <div className="mt-2 flex gap-1">{Object.entries(ra.per_se_flags_json || {}).filter(([,v]) => v).map(([k]) => <Badge key={k} className="bg-red-100 text-red-700 border-transparent text-xs">{k.replace(/_/g,' ')}</Badge>)}</div>}
+                </CardContent></Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          {/* ===== TAB: APPROVALS ===== */}
+          <TabsContent value="approvals">
+            <div className="bg-white border border-[#E2E8F0] rounded-md overflow-hidden">
+              <table className="w-full"><thead><tr className="border-b bg-[#F8FAFC]">
+                <th className="h-8 px-3 text-left text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Task</th>
+                <th className="h-8 px-3 text-left text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Status</th>
+                <th className="h-8 px-3 text-left text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Decision</th>
+                <th className="h-8 px-3 text-left text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Date</th>
+              </tr></thead><tbody>
                 {approvalTasks.map(t => (
                   <tr key={t.id} className="border-b hover:bg-[#F8FAFC]">
-                    <td className="px-4 py-3 text-sm capitalize">{t.task_type?.replace(/_/g,' ')}</td>
-                    <td className="px-4 py-3"><Badge className={t.status === 'completed' ? 'bg-green-100 text-green-700 border-transparent' : 'bg-amber-100 text-amber-700 border-transparent'}>{t.status}</Badge></td>
-                    <td className="px-4 py-3"><Badge className={t.decision === 'approved' ? 'bg-green-100 text-green-700 border-transparent' : t.decision === 'rejected' ? 'bg-red-100 text-red-700 border-transparent' : 'bg-gray-100 border-transparent'}>{t.decision || 'pending'}</Badge></td>
-                    <td className="px-4 py-3 text-xs font-['JetBrains_Mono'] text-[#64748B]">{t.created_at?.slice(0,10)}</td>
+                    <td className="px-3 py-2 text-sm capitalize">{t.task_type?.replace(/_/g,' ')}</td>
+                    <td className="px-3 py-2"><Badge className={t.status === 'completed' ? 'bg-green-100 text-green-700 border-transparent' : 'bg-amber-100 text-amber-700 border-transparent'}>{t.status}</Badge></td>
+                    <td className="px-3 py-2"><Badge className={t.decision === 'approved' ? 'bg-green-100 text-green-700 border-transparent' : t.decision === 'rejected' ? 'bg-red-100 text-red-700 border-transparent' : 'bg-gray-100 border-transparent'}>{t.decision || 'pending'}</Badge></td>
+                    <td className="px-3 py-2 text-xs font-['JetBrains_Mono'] text-[#64748B]">{t.created_at?.slice(0,10)}</td>
                   </tr>
                 ))}
-                {!approvalTasks.length && <tr><td colSpan={4} className="px-4 py-8 text-center text-sm text-[#64748B]">No approval tasks</td></tr>}
-              </tbody>
-            </table>
-          </div>
-        </TabsContent>
+                {!approvalTasks.length && <tr><td colSpan={4} className="px-3 py-8 text-center text-sm text-[#64748B]">No approval tasks</td></tr>}
+              </tbody></table>
+            </div>
+          </TabsContent>
 
-        <TabsContent value="audit">
-          <div className="bg-white border border-[#E2E8F0] rounded-md overflow-hidden max-h-[600px] overflow-y-auto">
-            <table className="w-full">
-              <thead className="sticky top-0 bg-[#F8FAFC]">
-                <tr className="border-b">
-                  <th className="h-10 px-4 text-left text-[11px] uppercase tracking-wider font-semibold text-[#64748B]">Timestamp</th>
-                  <th className="h-10 px-4 text-left text-[11px] uppercase tracking-wider font-semibold text-[#64748B]">Action</th>
-                  <th className="h-10 px-4 text-left text-[11px] uppercase tracking-wider font-semibold text-[#64748B]">Actor</th>
-                  <th className="h-10 px-4 text-left text-[11px] uppercase tracking-wider font-semibold text-[#64748B]">Entity</th>
-                </tr>
-              </thead>
-              <tbody>
+          {/* ===== TAB: AUDIT ===== */}
+          <TabsContent value="audit">
+            <div className="bg-white border border-[#E2E8F0] rounded-md overflow-hidden max-h-[500px] overflow-y-auto">
+              <table className="w-full"><thead className="sticky top-0 bg-[#F8FAFC]"><tr className="border-b">
+                <th className="h-8 px-3 text-left text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Time</th>
+                <th className="h-8 px-3 text-left text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Action</th>
+                <th className="h-8 px-3 text-left text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Actor</th>
+                <th className="h-8 px-3 text-left text-[10px] uppercase tracking-wider font-semibold text-[#64748B]">Entity</th>
+              </tr></thead><tbody>
                 {auditLogs.map(l => (
                   <tr key={l.id} className="border-b hover:bg-[#F8FAFC]">
-                    <td className="px-4 py-2 text-xs font-['JetBrains_Mono'] text-[#64748B]">{l.timestamp?.slice(0,19)}</td>
-                    <td className="px-4 py-2 text-xs font-medium">{l.action_key}</td>
-                    <td className="px-4 py-2 text-xs text-[#64748B]">{l.actor_role}</td>
-                    <td className="px-4 py-2 text-xs font-['JetBrains_Mono'] text-[#64748B]">{l.entity_type}/{l.entity_id?.slice(0,8)}</td>
+                    <td className="px-3 py-1.5 text-[11px] font-['JetBrains_Mono'] text-[#64748B]">{l.timestamp?.slice(0,19)}</td>
+                    <td className="px-3 py-1.5 text-xs font-medium">{l.action_key}</td>
+                    <td className="px-3 py-1.5 text-xs text-[#64748B]">{l.actor_role}</td>
+                    <td className="px-3 py-1.5 text-[11px] font-['JetBrains_Mono'] text-[#64748B]">{l.entity_type}/{l.entity_id?.slice(0,8)}</td>
                   </tr>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        </TabsContent>
-      </Tabs>
+              </tbody></table>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </TooltipProvider>
+  );
+}
+
+// ===== Sub-Components =====
+
+function InfoField({ icon: Icon, label, value }) {
+  return (
+    <div className="flex items-start gap-2">
+      <Icon size={12} className="text-[#64748B] mt-0.5 shrink-0" />
+      <div>
+        <p className="text-[10px] text-[#64748B] uppercase tracking-wider">{label}</p>
+        <p className="text-sm font-medium font-['JetBrains_Mono'] leading-tight">{value || '-'}</p>
+      </div>
     </div>
+  );
+}
+
+function PersonCard({ party, requirements, documents, allDocs, onOsint, onViewDoc, getDocForReq }) {
+  const p = party;
+  const name = `${p.first_name} ${p.last_name}`.trim() || p.legal_name;
+  const done = requirements.filter(r => ['approved','auto_passed','waived'].includes(r.status)).length;
+  const total = requirements.length;
+
+  return (
+    <Card className="border-[#E2E8F0]">
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-[#F1F5F9] flex items-center justify-center text-xs font-semibold text-[#64748B]">{name.charAt(0)}</div>
+            <div>
+              <p className="text-sm font-semibold">{name}</p>
+              <div className="flex items-center gap-1">
+                <Badge className={`${ROLE_COLORS[p.role_in_case] || 'bg-gray-100'} border-transparent text-[9px] capitalize`}>{p.role_in_case}</Badge>
+                {p.ownership_percent && <span className="text-xs font-['JetBrains_Mono'] text-purple-700 font-bold">{p.ownership_percent}%</span>}
+              </div>
+            </div>
+          </div>
+          <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={onOsint} data-testid={`osint-${p.id}`}><Search size={12} className="mr-1" /> OSINT</Button>
+        </div>
+        {/* Personal data */}
+        <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
+          {p.nationality && <div><span className="text-[#64748B]">Nationality:</span> <span className="font-medium">{p.nationality}</span></div>}
+          {p.dob && <div><span className="text-[#64748B]">DOB:</span> <span className="font-['JetBrains_Mono']">{p.dob}</span></div>}
+          {p.identifiers_json?.passport && <div><span className="text-[#64748B]">Passport:</span> <span className="font-['JetBrains_Mono']">{p.identifiers_json.passport}</span></div>}
+          {typeof p.addresses_json === 'object' && Object.entries(p.addresses_json).map(([k,v]) => (
+            <div key={k} className="col-span-2"><span className="text-[#64748B]">{k}:</span> <span>{String(v)}</span></div>
+          ))}
+        </div>
+        {/* Requirement status mini-list */}
+        <div className="border-t border-[#F1F5F9] pt-2">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] text-[#64748B] uppercase tracking-wider">Documents</span>
+            <span className="text-[10px] font-['JetBrains_Mono'] text-[#64748B]">{done}/{total}</span>
+          </div>
+          <div className="space-y-1">
+            {requirements.map(r => {
+              const SIcon = STATUS_ICONS[r.status] || CircleDot;
+              const doc = getDocForReq(r.id);
+              return (
+                <div key={r.id} className="flex items-center gap-2 text-xs">
+                  <SIcon size={12} className={r.status === 'approved' || r.status === 'auto_passed' ? 'text-green-500' : r.status === 'rejected' ? 'text-red-500' : r.status === 'submitted' || r.status === 'needs_review' ? 'text-amber-500' : 'text-gray-400'} />
+                  <span className="flex-1 truncate">{r.requirement_label || r.requirement_key}</span>
+                  {doc && (
+                    <button onClick={() => onViewDoc(doc)} className="text-blue-500 hover:text-blue-700 shrink-0" data-testid={`view-${doc.id}`}>
+                      <Eye size={12} />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
