@@ -69,7 +69,8 @@ function AppRoutes() {
 
       {/* Tenant Workspace Routes */}
       <Route path="/workspace" element={<ProtectedRoute><TenantLayout /></ProtectedRoute>}>
-        <Route index element={<Navigate to="/workspace/cases" replace />} />
+        <Route index element={<Navigate to="/workspace/intake" replace />} />
+        <Route path="intake" element={<IntakePage />} />
         <Route path="cases" element={<CasesPipeline />} />
         <Route path="case/:caseId" element={<CaseDetail />} />
         <Route path="screening" element={<ScreeningQueue />} />
