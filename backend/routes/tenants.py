@@ -197,3 +197,61 @@ async def public_tenant_list(request: Request):
         {"_id": 0, "id": 1, "name": 1, "branding_json": 1}
     ).to_list(500)
     return tenants
+
+
+@router.get("/{tenant_id}/regulations")
+async def get_tenant_regulations(tenant_id: str, request: Request):
+    from middleware.auth_middleware import get_current_user
+    user = await get_current_user(request)
+    db = get_db(request)
+    regs = await db.tenant_regulations.find({"tenant_id": tenant_id}, {"_id": 0}).to_list(100)
+    return regs
+
+
+@router.post("/{tenant_id}/regulations")
+async def add_tenant_regulation(tenant_id: str, request: Request):
+    from middleware.auth_middleware import get_current_user
+    user = await get_current_user(request)
+    db = get_db(request)
+    body = await request.json()
+
+    reg = {
+        "id": str(uuid.uuid4()),
+        "tenant_id": tenant_id,
+        "framework": body.get("framework", ""),  # e.g. MiCAR, SEC, FMA, FINMA
+        "jurisdiction": body.get("jurisdiction", ""),  # e.g. EU, US, LI, CH
+        "description": body.get("description", ""),
+        "required_documents": body.get("required_documents", []),
+        "rules_json": body.get("rules_json", {}),
+        "active": True,
+        "created_by": user["user_id"],
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.tenant_regulations.insert_one({**reg})
+    return reg
+
+
+@router.put("/{tenant_id}/regulations/{reg_id}")
+async def update_tenant_regulation(tenant_id: str, reg_id: str, request: Request):
+    from middleware.auth_middleware import get_current_user
+    user = await get_current_user(request)
+    db = get_db(request)
+    body = await request.json()
+
+    updates = {}
+    for key in ["framework", "jurisdiction", "description", "required_documents", "rules_json", "active"]:
+        if key in body:
+            updates[key] = body[key]
+    updates["updated_at"] = datetime.now(timezone.utc).isoformat()
+    await db.tenant_regulations.update_one({"id": reg_id}, {"$set": updates})
+    return await db.tenant_regulations.find_one({"id": reg_id}, {"_id": 0})
+
+
+@router.delete("/{tenant_id}/regulations/{reg_id}")
+async def delete_tenant_regulation(tenant_id: str, reg_id: str, request: Request):
+    from middleware.auth_middleware import get_current_user
+    user = await get_current_user(request)
+    db = get_db(request)
+    await db.tenant_regulations.delete_one({"id": reg_id})
+    return {"message": "Deleted"}
+
