@@ -57,6 +57,7 @@ from routes.qa import router as qa_router
 from routes.video_ident import router as video_ident_router
 from routes.reminders import router as reminders_router
 from routes.integrations import router as integrations_router
+from routes.intake import router as intake_router
 
 app.include_router(auth_router)
 app.include_router(tenants_router)
