@@ -8,6 +8,7 @@ import NotificationBell from '@/components/shared/NotificationBell';
 import api from '@/api/client';
 
 const NAV_ITEMS = [
+  { label: 'Intake', path: '/workspace/intake', icon: Inbox },
   { label: 'Cases', path: '/workspace/cases', icon: FolderOpen },
   { label: 'Screening', path: '/workspace/screening', icon: Search },
   { label: 'Video Ident', path: '/workspace/video-ident', icon: Video },
