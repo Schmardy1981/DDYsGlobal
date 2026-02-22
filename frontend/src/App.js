@@ -31,6 +31,7 @@ import TenantSettings from '@/pages/tenant/TenantSettings';
 import EDRPage from '@/pages/tenant/EDRPage';
 import QAPage from '@/pages/tenant/QAPage';
 import VideoIdentPage from '@/pages/tenant/VideoIdentPage';
+import IntakePage from '@/pages/tenant/IntakePage';
 
 // Customer Pages
 import CustomerLanding from '@/pages/customer/CustomerLanding';
