@@ -90,6 +90,9 @@ function AppRoutes() {
         <Route path="questionnaire" element={<ProtectedRoute><Questionnaire /></ProtectedRoute>} />
       </Route>
 
+      {/* Public Intake Form (no auth) */}
+      <Route path="/intake" element={<IntakeForm />} />
+
       {/* Default redirect */}
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
