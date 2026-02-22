@@ -305,6 +305,7 @@ async def add_party(case_id: str, request: Request):
         "identifiers_json": body.get("identifiers_json", {}),
         "ownership_percent": body.get("ownership_percent"),
         "control_flags_json": body.get("control_flags_json", {}),
+        "parent_party_id": body.get("parent_party_id"),
         "created_at": datetime.now(timezone.utc).isoformat(),
         "updated_at": datetime.now(timezone.utc).isoformat(),
         "deleted": False
