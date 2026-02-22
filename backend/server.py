@@ -78,6 +78,7 @@ app.include_router(qa_router)
 app.include_router(video_ident_router)
 app.include_router(reminders_router)
 app.include_router(integrations_router)
+app.include_router(intake_router)
 
 
 @app.get("/api")
