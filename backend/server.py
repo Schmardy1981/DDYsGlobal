@@ -145,6 +145,107 @@ async def osint_analyze(request: Request):
     return result
 
 
+# Prompt Management
+DEFAULT_OSINT_SYSTEM_PROMPT = """You are an OSINT and risk analysis expert for KYC/AML compliance.
+Analyze the provided entity information and generate a risk intelligence report.
+Return a JSON object with:
+- risk_indicators: list of risk indicators found
+- pep_likelihood: low/medium/high
+- adverse_media_summary: summary of any adverse media concerns
+- sanctions_risk: low/medium/high
+- country_risk: risk level of associated countries
+- recommendations: list of recommendations for the compliance team
+- overall_risk_assessment: low/medium/high with rationale
+Respond ONLY with valid JSON."""
+
+DEFAULT_OSINT_USER_PROMPT = """Perform OSINT risk analysis for KYC compliance:
+
+Entity Name: {name}
+Entity Type: {party_type}
+Nationality: {nationality}
+Role in Case: {role_in_case}
+Addresses: {addresses}
+Identifiers: {identifiers}
+
+Analyze this entity for:
+1. PEP (Politically Exposed Person) indicators
+2. Adverse media and reputation risks
+3. Sanctions exposure
+4. Country/jurisdiction risks
+5. Overall risk profile
+
+Return ONLY valid JSON."""
+
+DEFAULT_DOCINT_SYSTEM_PROMPT = """You are a KYC document analysis expert performing OCR and compliance checks.
+Analyze the document and return a JSON object:
+{
+  "classification": "id_passport|id_national|proof_of_address|utility_bill|tax_return|tax_report|police_report|registry_extract|annual_report|ownership_chart|attestation|bank_statement|other",
+  "extracted_fields": {"document_date": "YYYY-MM-DD", "issuer": "", "name_on_doc": "", "address_on_doc": "", "expiry_date": ""},
+  "ocr_text_preview": "first 200 chars of extracted text",
+  "authenticity_score": 0.85,
+  "tamper_signals": [],
+  "mismatches": [],
+  "wrong_document_type": false,
+  "psi_detected": false,
+  "decision": "auto_accept|auto_reject|needs_human",
+  "rationale": "explanation"
+}
+IMPORTANT: Check if the document type matches what was expected. Flag wrong_document_type=true if mismatch.
+Respond ONLY with valid JSON."""
+
+
+@app.get("/api/prompts")
+async def get_prompts(request: Request):
+    from middleware.auth_middleware import get_current_user
+    user = await get_current_user(request)
+    
+    saved = await db.system_settings.find_one({"key": "prompts"}, {"_id": 0})
+    return {
+        "osint_system": saved.get("osint_system", DEFAULT_OSINT_SYSTEM_PROMPT) if saved else DEFAULT_OSINT_SYSTEM_PROMPT,
+        "osint_user": saved.get("osint_user", DEFAULT_OSINT_USER_PROMPT) if saved else DEFAULT_OSINT_USER_PROMPT,
+        "docint_system": saved.get("docint_system", DEFAULT_DOCINT_SYSTEM_PROMPT) if saved else DEFAULT_DOCINT_SYSTEM_PROMPT,
+        "defaults": {
+            "osint_system": DEFAULT_OSINT_SYSTEM_PROMPT,
+            "osint_user": DEFAULT_OSINT_USER_PROMPT,
+            "docint_system": DEFAULT_DOCINT_SYSTEM_PROMPT,
+        }
+    }
+
+
+@app.put("/api/prompts")
+async def update_prompts(request: Request):
+    from middleware.auth_middleware import get_current_user
+    user = await get_current_user(request)
+    if user.get("global_role") not in ["GLOBAL_SUPER_ADMIN", "DDYS_COMPLIANCE_MANAGER"]:
+        from fastapi import HTTPException as HE
+        raise HE(status_code=403, detail="Insufficient permissions")
+    
+    body = await request.json()
+    updates = {"key": "prompts", "updated_at": __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat()}
+    for key in ["osint_system", "osint_user", "docint_system"]:
+        if key in body:
+            updates[key] = body[key]
+    
+    await db.system_settings.update_one({"key": "prompts"}, {"$set": updates}, upsert=True)
+    
+    await db.audit_logs.insert_one({
+        "id": str(__import__('uuid').uuid4()),
+        "tenant_id": "",
+        "actor_user_id": user["user_id"],
+        "actor_role": user.get("global_role", ""),
+        "action_key": "prompts.updated",
+        "entity_type": "system_settings",
+        "entity_id": "prompts",
+        "timestamp": __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat(),
+        "before_json": None,
+        "after_json": {k: v[:50] + "..." for k, v in updates.items() if k != "key"},
+        "ip_address": request.client.host if request.client else "",
+        "user_agent": request.headers.get("user-agent", "")
+    })
+    
+    return {"message": "Prompts updated"}
+
+
 # KYC Export endpoint
 @app.post("/api/export/kyc/{case_id}")
 async def export_kyc(case_id: str, request: Request):
