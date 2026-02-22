@@ -18,6 +18,7 @@ import PolicyPage from '@/pages/admin/PolicyPage';
 import SettingsPage from '@/pages/admin/SettingsPage';
 import PeriodicJobsPage from '@/pages/admin/PeriodicJobsPage';
 import IntegrationsPage from '@/pages/admin/IntegrationsPage';
+import PromptsPage from '@/pages/admin/PromptsPage';
 
 // Tenant Pages
 import CasesPipeline from '@/pages/tenant/CasesPipeline';
