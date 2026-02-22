@@ -196,3 +196,82 @@ async def list_runs(request: Request, case_id: Optional[str] = None, tenant_id: 
     
     runs = await db.screening_runs.find(query, {"_id": 0}).sort("created_at", -1).to_list(200)
     return runs
+
+
+@router.post("/osint")
+async def run_osint_screening(request: Request):
+    """Run OSINT screening for a specific party in a case."""
+    from middleware.auth_middleware import get_current_user
+    user = await get_current_user(request)
+    db = get_db(request)
+    body = await request.json()
+
+    case_id = body.get("case_id")
+    party_id = body.get("party_id")
+
+    case = await db.cases.find_one({"id": case_id}, {"_id": 0})
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found")
+
+    party = await db.parties.find_one({"id": party_id}, {"_id": 0})
+    if not party:
+        raise HTTPException(status_code=404, detail="Party not found")
+
+    # Create screening run record
+    run = {
+        "id": str(uuid.uuid4()),
+        "tenant_id": case["tenant_id"],
+        "case_id": case_id,
+        "run_type": "osint",
+        "provider": "llm_osint",
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "finished_at": None,
+        "status": "running",
+        "parameters_json": {"party_id": party_id, "party_name": party.get("legal_name") or f"{party.get('first_name','')} {party.get('last_name','')}"},
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.screening_runs.insert_one({**run})
+
+    # Run OSINT analysis
+    from services.osint_service import run_osint_analysis
+    try:
+        result = await run_osint_analysis(db, case_id, party_id)
+
+        # Update run
+        await db.screening_runs.update_one(
+            {"id": run["id"]},
+            {"$set": {
+                "status": "completed",
+                "finished_at": datetime.now(timezone.utc).isoformat(),
+                "parameters_json": {
+                    **run["parameters_json"],
+                    "overall_risk": result.get("result_json", {}).get("overall_risk_assessment", "unknown"),
+                    "osint_result_id": result.get("id")
+                }
+            }}
+        )
+
+        return {"run": run, "result": result}
+    except Exception as e:
+        await db.screening_runs.update_one(
+            {"id": run["id"]},
+            {"$set": {"status": "error", "finished_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/osint-results")
+async def list_osint_results(request: Request, case_id: Optional[str] = None, party_id: Optional[str] = None):
+    from middleware.auth_middleware import get_current_user
+    user = await get_current_user(request)
+    db = get_db(request)
+
+    query = {}
+    if case_id:
+        query["case_id"] = case_id
+    if party_id:
+        query["party_id"] = party_id
+
+    results = await db.osint_results.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
+    return results
+
