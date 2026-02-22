@@ -59,6 +59,7 @@ function AppRoutes() {
         <Route path="users" element={<UsersPage />} />
         <Route path="integrations" element={<IntegrationsPage />} />
         <Route path="prompts" element={<PromptsPage />} />
+        <Route path="customer-form" element={<CustomerFormPreview />} />
         <Route path="policy" element={<PolicyPage />} />
         <Route path="jobs" element={<PeriodicJobsPage />} />
         <Route path="settings" element={<SettingsPage />} />
