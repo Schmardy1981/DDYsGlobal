@@ -19,6 +19,8 @@ const STATUS_COLORS = {
   restricted: 'bg-red-100 text-red-700', rejected: 'bg-red-100 text-red-700', offboarded: 'bg-gray-100 text-gray-700'
 };
 
+const ALL_STATUSES = ['draft','customer_in_progress','customer_submitted','automated_checks','maker_review','checker_review','business_approval','compliance_approval','mlro_approval','completed','restricted','rejected','offboarded'];
+
 const RISK_COLORS = { low: 'bg-green-100 text-green-700', medium: 'bg-amber-100 text-amber-700', high: 'bg-red-100 text-red-700' };
 
 export default function CasesPipeline() {
