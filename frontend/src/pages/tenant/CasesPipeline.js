@@ -170,7 +170,18 @@ export default function CasesPipeline() {
               <tr key={c.id} className="border-b hover:bg-[#F8FAFC] transition-colors cursor-pointer" onClick={() => navigate(`/workspace/case/${c.id}`)} data-testid={`case-row-${c.id}`}>
                 <td className="px-4 py-3 text-sm font-medium font-['JetBrains_Mono']">{c.case_ref}</td>
                 <td className="px-4 py-3"><Badge variant="outline" className="text-xs capitalize">{c.case_type?.replace(/_/g, ' ')}</Badge></td>
-                <td className="px-4 py-3"><Badge className={`${STATUS_COLORS[c.status] || ''} border-transparent text-xs`}>{c.status?.replace(/_/g, ' ')}</Badge></td>
+                <td className="px-4 py-2" onClick={e => e.stopPropagation()}>
+                  <Select value={c.status} onValueChange={(v) => handleStatusChange(c.id, v, { stopPropagation: () => {} })}>
+                    <SelectTrigger className={`h-7 text-[10px] w-40 ${STATUS_COLORS[c.status]?.split(' ')[0] || ''} border-transparent`} data-testid={`status-select-${c.id}`}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ALL_STATUSES.map(s => (
+                        <SelectItem key={s} value={s}><span className="text-xs capitalize">{s.replace(/_/g, ' ')}</span></SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </td>
                 <td className="px-4 py-3">{c.risk_rating ? <Badge className={`${RISK_COLORS[c.risk_rating] || ''} border-transparent text-xs capitalize`}>{c.risk_rating}</Badge> : <span className="text-xs text-[#64748B]">-</span>}</td>
                 <td className="px-4 py-3 text-xs uppercase font-['JetBrains_Mono'] text-[#64748B]">{c.due_diligence_level || '-'}</td>
                 <td className="px-4 py-3 text-xs font-['JetBrains_Mono']">{c.jurisdiction}</td>
