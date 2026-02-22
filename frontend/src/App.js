@@ -38,6 +38,7 @@ import CustomerLanding from '@/pages/customer/CustomerLanding';
 import CustomerDashboard from '@/pages/customer/CustomerDashboard';
 import CustomerInvitePage from '@/pages/customer/CustomerInvitePage';
 import Questionnaire from '@/pages/customer/Questionnaire';
+import IntakeForm from '@/pages/customer/IntakeForm';
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
