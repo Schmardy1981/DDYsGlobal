@@ -19,6 +19,7 @@ import SettingsPage from '@/pages/admin/SettingsPage';
 import PeriodicJobsPage from '@/pages/admin/PeriodicJobsPage';
 import IntegrationsPage from '@/pages/admin/IntegrationsPage';
 import PromptsPage from '@/pages/admin/PromptsPage';
+import CustomerFormPreview from '@/pages/admin/CustomerFormPreview';
 
 // Tenant Pages
 import CasesPipeline from '@/pages/tenant/CasesPipeline';
