@@ -393,85 +393,100 @@ export default function CaseDetail() {
           <TabsContent value="structure">
             <Card className="border-[#E2E8F0]">
               <CardContent className="p-6">
-                <h3 className="text-sm font-semibold text-[#64748B] uppercase tracking-wider mb-6">Ownership & Control Structure</h3>
-                {/* Visual org chart */}
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-sm font-semibold text-[#64748B] uppercase tracking-wider">Ownership & Control Structure</h3>
+                  <Button size="sm" variant="outline" onClick={() => setAddParty({ parentId: clientParty?.id, role: 'ubo' })} data-testid="add-owner-btn">
+                    <UserPlus size={14} className="mr-1" /> Add Owner / Entity
+                  </Button>
+                </div>
                 <div className="flex flex-col items-center">
-                  {/* Company at top */}
                   {clientParty && (
-                    <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-4 text-center mb-2 min-w-[280px]" data-testid="structure-client">
+                    <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-4 text-center mb-2 min-w-[280px] cursor-pointer hover:border-blue-500 transition-colors" onClick={() => setEditParty(clientParty)} data-testid="structure-client">
                       <Building2 size={24} className="mx-auto text-blue-600 mb-1" />
                       <p className="text-sm font-semibold">{clientParty.legal_name || `${clientParty.first_name} ${clientParty.last_name}`}</p>
                       <p className="text-[10px] text-[#64748B]">{clientParty.party_type?.replace(/_/g, ' ')} | {clientParty.nationality}</p>
                       {clientParty.identifiers_json?.registration_number && <p className="text-[10px] font-['JetBrains_Mono'] text-[#64748B]">Reg: {clientParty.identifiers_json.registration_number}</p>}
+                      <p className="text-[9px] text-blue-500 mt-1">Click to edit</p>
                     </div>
                   )}
-
-                  {/* Connector lines */}
                   {(ubos.length > 0 || directors.length > 0) && <div className="w-0.5 h-8 bg-[#CBD5E1]" />}
-
-                  {/* UBOs row */}
                   {ubos.length > 0 && (
                     <div className="mb-6 w-full">
                       <p className="text-center text-[10px] text-[#64748B] uppercase tracking-wider mb-3">Beneficial Owners</p>
                       <div className="flex justify-center gap-4 flex-wrap">
                         {ubos.map(p => {
-                          const pReqs = getPartyReqs(p.id);
-                          const pDone = pReqs.filter(r => ['approved','auto_passed','waived'].includes(r.status)).length;
+                          const pReqs = getPartyReqs(p.id); const pDone = pReqs.filter(r => ['approved','auto_passed','waived'].includes(r.status)).length;
+                          // Check if this UBO is a company (needs sub-owners)
+                          const subOwners = parties.filter(sp => sp.parent_party_id === p.id);
                           return (
-                            <div key={p.id} className="bg-purple-50 border-2 border-purple-300 rounded-lg p-3 text-center min-w-[200px] relative" data-testid={`structure-ubo-${p.id}`}>
-                              <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-0.5 h-3 bg-[#CBD5E1]" />
-                              <User size={20} className="mx-auto text-purple-600 mb-1" />
-                              <p className="text-sm font-semibold">{p.first_name} {p.last_name}</p>
-                              {p.ownership_percent && (
-                                <div className="flex items-center justify-center gap-1 mt-1">
-                                  <Percent size={12} className="text-purple-600" />
-                                  <span className="text-lg font-bold font-['JetBrains_Mono'] text-purple-700">{p.ownership_percent}%</span>
+                            <div key={p.id} className="flex flex-col items-center">
+                              <div className={`${p.party_type === 'legal_entity' ? 'bg-blue-50 border-blue-300' : 'bg-purple-50 border-purple-300'} border-2 rounded-lg p-3 text-center min-w-[200px] relative cursor-pointer hover:shadow-md transition-shadow`} onClick={() => setEditParty(p)} data-testid={`structure-ubo-${p.id}`}>
+                                <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-0.5 h-3 bg-[#CBD5E1]" />
+                                {p.party_type === 'legal_entity' ? <Building2 size={20} className="mx-auto text-blue-600 mb-1" /> : <User size={20} className="mx-auto text-purple-600 mb-1" />}
+                                <p className="text-sm font-semibold">{p.legal_name || `${p.first_name} ${p.last_name}`}</p>
+                                {p.ownership_percent && <div className="flex items-center justify-center gap-1 mt-1"><Percent size={12} className="text-purple-600" /><span className="text-lg font-bold font-['JetBrains_Mono'] text-purple-700">{p.ownership_percent}%</span></div>}
+                                <div className="text-[10px] text-[#64748B] mt-1 space-y-0.5">{p.nationality && <p>{p.nationality}</p>}{p.dob && <p>DOB: {p.dob}</p>}</div>
+                                <div className="mt-2 flex items-center justify-center gap-1"><div className="w-12 h-1.5 bg-gray-200 rounded-full"><div className={`h-1.5 ${p.party_type === 'legal_entity' ? 'bg-blue-500' : 'bg-purple-500'} rounded-full`} style={{ width: `${pReqs.length ? (pDone/pReqs.length)*100 : 0}%` }} /></div><span className="text-[9px] text-[#64748B]">{pDone}/{pReqs.length}</span></div>
+                                <p className="text-[9px] text-blue-500 mt-1">Click to edit</p>
+                                {p.party_type === 'legal_entity' && (
+                                  <Button size="sm" variant="ghost" className="mt-1 h-6 text-[10px]" onClick={(e) => { e.stopPropagation(); setAddParty({ parentId: p.id, role: 'ubo' }); }}>
+                                    <UserPlus size={10} className="mr-1" /> Add Sub-Owner
+                                  </Button>
+                                )}
+                              </div>
+                              {/* Sub-owners */}
+                              {subOwners.length > 0 && (
+                                <div className="mt-2">
+                                  <div className="w-0.5 h-4 bg-[#CBD5E1] mx-auto" />
+                                  <div className="flex gap-2">
+                                    {subOwners.map(so => (
+                                      <div key={so.id} className="bg-gray-50 border border-gray-300 rounded-lg p-2 text-center min-w-[140px] cursor-pointer hover:shadow-sm" onClick={() => setEditParty(so)}>
+                                        {so.party_type === 'legal_entity' ? <Building2 size={14} className="mx-auto text-gray-600 mb-0.5" /> : <User size={14} className="mx-auto text-gray-600 mb-0.5" />}
+                                        <p className="text-xs font-medium">{so.legal_name || `${so.first_name} ${so.last_name}`}</p>
+                                        {so.ownership_percent && <p className="text-xs font-bold font-['JetBrains_Mono']">{so.ownership_percent}%</p>}
+                                      </div>
+                                    ))}
+                                  </div>
                                 </div>
                               )}
-                              <div className="text-[10px] text-[#64748B] mt-1 space-y-0.5">
-                                {p.nationality && <p>Nationality: {p.nationality}</p>}
-                                {p.dob && <p>DOB: {p.dob}</p>}
-                              </div>
-                              <div className="mt-2 flex items-center justify-center gap-1">
-                                <div className="w-12 h-1.5 bg-gray-200 rounded-full"><div className="h-1.5 bg-purple-500 rounded-full" style={{ width: `${pReqs.length ? (pDone/pReqs.length)*100 : 0}%` }} /></div>
-                                <span className="text-[9px] text-[#64748B]">{pDone}/{pReqs.length}</span>
-                              </div>
                             </div>
                           );
                         })}
                       </div>
                     </div>
                   )}
-
-                  {/* Directors row */}
                   {directors.length > 0 && (
                     <div className="w-full">
                       <p className="text-center text-[10px] text-[#64748B] uppercase tracking-wider mb-3">Directors & Signatories</p>
                       <div className="flex justify-center gap-4 flex-wrap">
-                        {directors.map(p => {
-                          const pReqs = getPartyReqs(p.id);
-                          const pDone = pReqs.filter(r => ['approved','auto_passed','waived'].includes(r.status)).length;
-                          return (
-                            <div key={p.id} className="bg-teal-50 border-2 border-teal-300 rounded-lg p-3 text-center min-w-[200px]" data-testid={`structure-director-${p.id}`}>
-                              <User size={20} className="mx-auto text-teal-600 mb-1" />
-                              <p className="text-sm font-semibold">{p.first_name} {p.last_name}</p>
-                              <Badge className="bg-teal-100 text-teal-700 border-transparent text-[9px] mt-1">{p.role_in_case}</Badge>
-                              <div className="text-[10px] text-[#64748B] mt-1">
-                                {p.nationality && <p>Nationality: {p.nationality}</p>}
-                              </div>
-                              <div className="mt-2 flex items-center justify-center gap-1">
-                                <div className="w-12 h-1.5 bg-gray-200 rounded-full"><div className="h-1.5 bg-teal-500 rounded-full" style={{ width: `${pReqs.length ? (pDone/pReqs.length)*100 : 0}%` }} /></div>
-                                <span className="text-[9px] text-[#64748B]">{pDone}/{pReqs.length}</span>
-                              </div>
-                            </div>
-                          );
-                        })}
+                        {directors.map(p => (
+                          <div key={p.id} className="bg-teal-50 border-2 border-teal-300 rounded-lg p-3 text-center min-w-[200px] cursor-pointer hover:shadow-md transition-shadow" onClick={() => setEditParty(p)} data-testid={`structure-director-${p.id}`}>
+                            <User size={20} className="mx-auto text-teal-600 mb-1" /><p className="text-sm font-semibold">{p.first_name} {p.last_name}</p><Badge className="bg-teal-100 text-teal-700 border-transparent text-[9px] mt-1">{p.role_in_case}</Badge>
+                            <p className="text-[9px] text-blue-500 mt-1">Click to edit</p>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
                 </div>
               </CardContent>
             </Card>
+
+            {/* Edit Party Dialog */}
+            <Dialog open={!!editParty} onOpenChange={(o) => { if (!o) setEditParty(null); }}>
+              <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+                <DialogHeader><DialogTitle>Edit: {editParty?.legal_name || `${editParty?.first_name} ${editParty?.last_name}`}</DialogTitle></DialogHeader>
+                {editParty && <PartyEditForm party={editParty} onSave={(data) => handleSaveParty(editParty.id, data)} onClose={() => setEditParty(null)} />}
+              </DialogContent>
+            </Dialog>
+
+            {/* Add Party Dialog */}
+            <Dialog open={!!addParty} onOpenChange={(o) => { if (!o) setAddParty(null); }}>
+              <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+                <DialogHeader><DialogTitle>Add Owner / Related Party</DialogTitle></DialogHeader>
+                {addParty && <PartyAddForm parentId={addParty.parentId} defaultRole={addParty.role} onAdd={handleAddParty} onClose={() => setAddParty(null)} />}
+              </DialogContent>
+            </Dialog>
           </TabsContent>
 
           {/* ===== TAB: SCREENING (with OSINT) ===== */}
