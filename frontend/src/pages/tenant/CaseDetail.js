@@ -125,6 +125,32 @@ export default function CaseDetail() {
     } catch (err) { alert(err.response?.data?.detail || 'Failed'); }
   };
 
+  const handleSaveParty = async (partyId, data) => {
+    try {
+      await api.put(`/cases/${caseId}/parties/${partyId}`, data);
+      setEditParty(null);
+      loadCase();
+    } catch (err) { alert(err.response?.data?.detail || 'Failed'); }
+  };
+
+  const handleAddParty = async (data) => {
+    try {
+      await api.post(`/cases/${caseId}/parties`, data);
+      setAddParty(null);
+      loadCase();
+    } catch (err) { alert(err.response?.data?.detail || 'Failed'); }
+  };
+
+  const handleOsintScreening = async (partyId) => {
+    setRunningOsint(partyId);
+    try {
+      const res = await api.post('/screening/osint', { case_id: caseId, party_id: partyId });
+      loadCase();
+      alert('OSINT screening complete');
+    } catch (err) { alert(err.response?.data?.detail || 'Failed'); }
+    finally { setRunningOsint(null); }
+  };
+
   const openDocViewer = (doc) => {
     const token = localStorage.getItem('ddys_token');
     const url = `${BACKEND_URL}/api/documents/view/${doc.id}`;
