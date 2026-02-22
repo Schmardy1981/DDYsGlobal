@@ -269,9 +269,15 @@ export default function CaseDetail() {
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                           {clientParty.nationality && <InfoField icon={Globe} label="Nationality" value={clientParty.nationality} />}
                           {clientParty.dob && <InfoField icon={Calendar} label="Date of Birth" value={clientParty.dob} />}
+                          {clientParty.identifiers_json?.place_of_birth && <InfoField icon={MapPin} label="Place of Birth" value={clientParty.identifiers_json.place_of_birth} />}
+                          {clientParty.identifiers_json?.middle_names && <InfoField icon={User} label="Middle Names" value={clientParty.identifiers_json.middle_names} />}
                           {clientParty.identifiers_json?.registration_number && <InfoField icon={CreditCard} label="Reg. Number" value={clientParty.identifiers_json.registration_number} />}
                           {clientParty.identifiers_json?.lei && <InfoField icon={CreditCard} label="LEI" value={clientParty.identifiers_json.lei} />}
                           {clientParty.identifiers_json?.passport && <InfoField icon={CreditCard} label="Passport" value={clientParty.identifiers_json.passport} />}
+                          {clientParty.identifiers_json?.passport_expiry && <InfoField icon={Calendar} label="Passport Expiry" value={clientParty.identifiers_json.passport_expiry} />}
+                          {clientParty.identifiers_json?.passport_issuing_authority && <InfoField icon={Shield} label="Issuing Authority" value={clientParty.identifiers_json.passport_issuing_authority} />}
+                          {clientParty.identifiers_json?.passport_mrz && <InfoField icon={CreditCard} label="MRZ" value={clientParty.identifiers_json.passport_mrz} />}
+                          {clientParty.identifiers_json?.national_id && <InfoField icon={CreditCard} label="National ID" value={clientParty.identifiers_json.national_id} />}
                           {typeof clientParty.addresses_json === 'object' && Object.entries(clientParty.addresses_json).map(([k, v]) => (
                             <InfoField key={k} icon={MapPin} label={k} value={String(v)} />
                           ))}
