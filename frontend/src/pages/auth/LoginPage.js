@@ -65,6 +65,10 @@ export default function LoginPage() {
     setQuickLoading(userEmail);
     setError('');
     try {
+      // Clear previous session
+      localStorage.removeItem('ddys_token');
+      localStorage.removeItem('ddys_user');
+      localStorage.removeItem('ddys_active_tenant');
       const res = await api.post('/auth/quick-login', { email: userEmail });
       completeLogin(res.data.token, res.data.user);
       redirectUser(res.data.user);
