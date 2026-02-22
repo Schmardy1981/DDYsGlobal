@@ -17,6 +17,7 @@ import UsersPage from '@/pages/admin/UsersPage';
 import PolicyPage from '@/pages/admin/PolicyPage';
 import SettingsPage from '@/pages/admin/SettingsPage';
 import PeriodicJobsPage from '@/pages/admin/PeriodicJobsPage';
+import IntegrationsPage from '@/pages/admin/IntegrationsPage';
 
 // Tenant Pages
 import CasesPipeline from '@/pages/tenant/CasesPipeline';
