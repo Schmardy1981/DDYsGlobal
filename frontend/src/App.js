@@ -36,8 +36,8 @@ import CustomerDashboard from '@/pages/customer/CustomerDashboard';
 import CustomerInvitePage from '@/pages/customer/CustomerInvitePage';
 import Questionnaire from '@/pages/customer/Questionnaire';
 
-function ProtectedRoute({ children, portal }) {
-  const { isAuthenticated, loading, getPortal } = useAuth();
+function ProtectedRoute({ children }) {
+  const { isAuthenticated, loading } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center text-sm text-[#64748B]">Loading...</div>;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   return children;
