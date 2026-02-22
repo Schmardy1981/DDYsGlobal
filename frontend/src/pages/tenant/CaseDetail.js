@@ -671,7 +671,14 @@ function PersonCard({ party, requirements, documents, allDocs, onOsint, onViewDo
         <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
           {p.nationality && <div><span className="text-[#64748B]">Nationality:</span> <span className="font-medium">{p.nationality}</span></div>}
           {p.dob && <div><span className="text-[#64748B]">DOB:</span> <span className="font-['JetBrains_Mono']">{p.dob}</span></div>}
-          {p.identifiers_json?.passport && <div><span className="text-[#64748B]">Passport:</span> <span className="font-['JetBrains_Mono']">{p.identifiers_json.passport}</span></div>}
+          {p.identifiers_json?.place_of_birth && <div><span className="text-[#64748B]">Birth Place:</span> <span>{p.identifiers_json.place_of_birth}</span></div>}
+          {p.identifiers_json?.middle_names && <div><span className="text-[#64748B]">Middle Names:</span> <span>{p.identifiers_json.middle_names}</span></div>}
+          {p.identifiers_json?.passport && <div><span className="text-[#64748B]">Passport:</span> <span className="font-['JetBrains_Mono'] font-medium">{p.identifiers_json.passport}</span></div>}
+          {p.identifiers_json?.passport_expiry && <div><span className="text-[#64748B]">Passport Exp:</span> <span className="font-['JetBrains_Mono']">{p.identifiers_json.passport_expiry}</span></div>}
+          {p.identifiers_json?.passport_issuing_authority && <div className="col-span-2"><span className="text-[#64748B]">Issuing Authority:</span> <span>{p.identifiers_json.passport_issuing_authority}</span></div>}
+          {p.identifiers_json?.passport_mrz && <div className="col-span-2"><span className="text-[#64748B]">MRZ:</span> <span className="font-['JetBrains_Mono'] text-[10px] break-all">{p.identifiers_json.passport_mrz}</span></div>}
+          {p.identifiers_json?.national_id && <div><span className="text-[#64748B]">National ID:</span> <span className="font-['JetBrains_Mono']">{p.identifiers_json.national_id}</span></div>}
+          {p.identifiers_json?.national_id_expiry && <div><span className="text-[#64748B]">ID Exp:</span> <span className="font-['JetBrains_Mono']">{p.identifiers_json.national_id_expiry}</span></div>}
           {typeof p.addresses_json === 'object' && Object.entries(p.addresses_json).map(([k,v]) => (
             <div key={k} className="col-span-2"><span className="text-[#64748B]">{k}:</span> <span>{String(v)}</span></div>
           ))}
