@@ -47,6 +47,22 @@ export default function CasesPipeline() {
     api.get(url).then(r => setCases(r.data)).catch(console.error).finally(() => setLoading(false));
   }, [tenantId, statusFilter, riskFilter, typeFilter]);
 
+  const handleStatusChange = async (caseId, newStatus, e) => {
+    e.stopPropagation();
+    try {
+      await api.put(`/cases/${caseId}/status`, { status: newStatus });
+      // Reload
+      let url = '/cases';
+      const params = [];
+      if (tenantId) params.push(`tenant_id=${tenantId}`);
+      if (statusFilter !== 'all') params.push(`status=${statusFilter}`);
+      if (riskFilter !== 'all') params.push(`risk_rating=${riskFilter}`);
+      if (typeFilter !== 'all') params.push(`case_type=${typeFilter}`);
+      if (params.length) url += '?' + params.join('&');
+      api.get(url).then(r => setCases(r.data));
+    } catch (err) { alert(err.response?.data?.detail || 'Failed'); }
+  };
+
   const handleCreate = async () => {
     try {
       const tid = tenantId || (await api.get('/tenants').then(r => r.data[0]?.id));
