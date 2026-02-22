@@ -120,7 +120,57 @@ async def get_jobs_status(request: Request):
     from middleware.auth_middleware import get_current_user
     user = await get_current_user(request)
     status = await db.system_settings.find_one({"key": "periodic_jobs"}, {"_id": 0})
-    return status or {"key": "periodic_jobs", "status": "not_started"}
+    config = await db.system_settings.find_one({"key": "job_intervals"}, {"_id": 0})
+    defaults = {
+        "nrd_rr_check": 24,
+        "edr_deadlines": 24,
+        "waiver_expiry": 24,
+        "document_expiry": 72,
+        "screening_refresh": 168,
+    }
+    intervals = config.get("intervals", defaults) if config else defaults
+    return {
+        **(status or {"key": "periodic_jobs", "status": "not_started"}),
+        "intervals": intervals
+    }
+
+
+@app.get("/api/jobs/intervals")
+async def get_job_intervals(request: Request):
+    from middleware.auth_middleware import get_current_user
+    user = await get_current_user(request)
+    config = await db.system_settings.find_one({"key": "job_intervals"}, {"_id": 0})
+    defaults = {
+        "nrd_rr_check": 24,
+        "edr_deadlines": 24,
+        "waiver_expiry": 24,
+        "document_expiry": 72,
+        "screening_refresh": 168,
+    }
+    return config.get("intervals", defaults) if config else defaults
+
+
+@app.put("/api/jobs/intervals")
+async def update_job_intervals(request: Request):
+    from middleware.auth_middleware import get_current_user
+    user = await get_current_user(request)
+    if user.get("global_role") not in ["GLOBAL_SUPER_ADMIN", "DDYS_COMPLIANCE_MANAGER"]:
+        from fastapi import HTTPException as HE
+        raise HE(status_code=403, detail="Insufficient permissions")
+    body = await request.json()
+    
+    intervals = {}
+    for key in ["nrd_rr_check", "edr_deadlines", "waiver_expiry", "document_expiry", "screening_refresh"]:
+        val = body.get(key)
+        if val is not None:
+            intervals[key] = max(24, int(val))  # minimum 24h
+    
+    await db.system_settings.update_one(
+        {"key": "job_intervals"},
+        {"$set": {"intervals": intervals, "updated_at": __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat()}},
+        upsert=True
+    )
+    return {"message": "Intervals updated", "intervals": intervals}
 
 
 @app.post("/api/seed")
