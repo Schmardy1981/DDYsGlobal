@@ -186,6 +186,48 @@ async def update_case(case_id: str, body: CaseUpdate, request: Request):
     return after
 
 
+
+@router.put("/{case_id}/status")
+async def quick_status_change(case_id: str, request: Request):
+    """Quick status change (admin/staff only, no gating)."""
+    from middleware.auth_middleware import get_current_user
+    user = await get_current_user(request)
+    db = get_db(request)
+    body = await request.json()
+    new_status = body.get("status")
+
+    if new_status not in CASE_STATUSES:
+        raise HTTPException(status_code=400, detail=f"Invalid status: {new_status}")
+
+    before = await db.cases.find_one({"id": case_id}, {"_id": 0})
+    if not before:
+        raise HTTPException(status_code=404, detail="Case not found")
+
+    await db.cases.update_one({"id": case_id}, {"$set": {
+        "status": new_status,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "last_action_at": datetime.now(timezone.utc).isoformat()
+    }})
+
+    await db.audit_logs.insert_one({
+        "id": str(uuid.uuid4()),
+        "tenant_id": before["tenant_id"],
+        "actor_user_id": user["user_id"],
+        "actor_role": user.get("global_role", ""),
+        "action_key": f"case.status_changed.{before['status']}_to_{new_status}",
+        "entity_type": "case",
+        "entity_id": case_id,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "before_json": {"status": before["status"]},
+        "after_json": {"status": new_status},
+        "ip_address": request.client.host if request.client else "",
+        "user_agent": request.headers.get("user-agent", "")
+    })
+
+    return {"message": f"Status changed to {new_status}"}
+
+
+
 @router.post("/{case_id}/transition")
 async def transition_case(case_id: str, request: Request):
     from middleware.auth_middleware import get_current_user
