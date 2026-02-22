@@ -93,6 +93,38 @@ async def login(req: LoginRequest, request: Request):
     return {"requires_mfa": False, "mfa_token": None, "token": token, "user": safe_user}
 
 
+@router.post("/quick-login")
+async def quick_login(request: Request):
+    """Dev mode: login by email only, no password required."""
+    db = get_db(request)
+    body = await request.json()
+    email = body.get("email")
+    
+    user = await db.users.find_one({"email": email}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.get("status") != "active":
+        raise HTTPException(status_code=401, detail="Account is inactive")
+    
+    tenant_roles = await db.user_tenant_roles.find({"user_id": user["id"], "active": True}, {"_id": 0}).to_list(100)
+    token = create_token(user, tenant_roles)
+    safe_user = {k: v for k, v in user.items() if k != "password_hash" and k != "mfa_secret"}
+    safe_user["tenant_roles"] = tenant_roles
+    return {"token": token, "user": safe_user}
+
+
+@router.get("/users-list")
+async def list_login_users(request: Request):
+    """Get all users for quick-login selector."""
+    db = get_db(request)
+    users = await db.users.find(
+        {"status": "active", "global_role": {"$ne": "END_CUSTOMER"}},
+        {"_id": 0, "id": 1, "email": 1, "name": 1, "global_role": 1}
+    ).to_list(100)
+    return users
+
+
+
 @router.post("/mfa/verify")
 async def verify_mfa(req: MFAVerifyRequest, request: Request):
     db = get_db(request)
