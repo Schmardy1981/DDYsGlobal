@@ -43,6 +43,10 @@ export default function CaseDetail() {
   const [reminders, setReminders] = useState([]);
   const [sendingReminder, setSendingReminder] = useState(false);
   const [viewDoc, setViewDoc] = useState(null);
+  const [editParty, setEditParty] = useState(null);
+  const [addParty, setAddParty] = useState(null); // {parentId, role}
+  const [osintResults, setOsintResults] = useState([]);
+  const [runningOsint, setRunningOsint] = useState(null);
 
   useEffect(() => { loadCase(); }, [caseId]);
 
@@ -50,11 +54,13 @@ export default function CaseDetail() {
     Promise.all([
       api.get(`/cases/${caseId}`),
       api.get(`/audit/case/${caseId}`),
-      api.get(`/reminders?case_id=${caseId}`)
-    ]).then(([caseRes, auditRes, remRes]) => {
+      api.get(`/reminders?case_id=${caseId}`),
+      api.get(`/screening/osint-results?case_id=${caseId}`)
+    ]).then(([caseRes, auditRes, remRes, osintRes]) => {
       setCaseData(caseRes.data);
       setAuditLogs(auditRes.data);
       setReminders(remRes.data);
+      setOsintResults(osintRes.data);
     }).catch(console.error).finally(() => setLoading(false));
   };
 
