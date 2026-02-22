@@ -332,6 +332,49 @@ async def add_party(case_id: str, request: Request):
     return party
 
 
+@router.put("/{case_id}/parties/{party_id}")
+async def update_party(case_id: str, party_id: str, request: Request):
+    """Edit party data (all fields editable by hand)."""
+    from middleware.auth_middleware import get_current_user
+    user = await get_current_user(request)
+    db = get_db(request)
+    body = await request.json()
+
+    before = await db.parties.find_one({"id": party_id}, {"_id": 0})
+    if not before:
+        raise HTTPException(status_code=404, detail="Party not found")
+
+    editable = [
+        "party_type", "role_in_case", "first_name", "last_name", "legal_name",
+        "dob", "nationality", "addresses_json", "identifiers_json",
+        "ownership_percent", "control_flags_json", "parent_party_id"
+    ]
+    updates = {k: v for k, v in body.items() if k in editable}
+    updates["updated_at"] = datetime.now(timezone.utc).isoformat()
+
+    await db.parties.update_one({"id": party_id}, {"$set": updates})
+    after = await db.parties.find_one({"id": party_id}, {"_id": 0})
+
+    await db.audit_logs.insert_one({
+        "id": str(uuid.uuid4()),
+        "tenant_id": before["tenant_id"],
+        "actor_user_id": user["user_id"],
+        "actor_role": user.get("global_role", ""),
+        "action_key": "party.updated",
+        "entity_type": "party",
+        "entity_id": party_id,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "before_json": before,
+        "after_json": after,
+        "ip_address": request.client.host if request.client else "",
+        "user_agent": request.headers.get("user-agent", "")
+    })
+
+    return after
+
+
+
+
 async def _generate_requirements(db, case, party):
     """Generate KYC requirements based on party type and role."""
     base_reqs = []
