@@ -15,7 +15,7 @@ def get_db(request: Request):
 async def list_all_users(request: Request, global_role: Optional[str] = None):
     from middleware.auth_middleware import get_current_user
     user = await get_current_user(request)
-    if user.get("global_role") not in ["GLOBAL_SUPER_ADMIN", "DDYS_COMPLIANCE_MANAGER"]:
+    if user.get("global_role") not in ["ADMIN"]:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
     db = get_db(request)
     
@@ -37,7 +37,7 @@ async def list_all_users(request: Request, global_role: Optional[str] = None):
 async def create_user(request: Request):
     from middleware.auth_middleware import get_current_user
     admin = await get_current_user(request)
-    if admin.get("global_role") not in ["GLOBAL_SUPER_ADMIN", "TENANT_ADMIN"]:
+    if admin.get("global_role") not in ["ADMIN"]:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
     db = get_db(request)
     body = await request.json()
@@ -102,6 +102,8 @@ async def create_user(request: Request):
 async def update_user(user_id: str, request: Request):
     from middleware.auth_middleware import get_current_user
     admin = await get_current_user(request)
+    if admin.get("global_role") not in ["ADMIN"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
     db = get_db(request)
     body = await request.json()
     
@@ -142,7 +144,7 @@ async def update_user(user_id: str, request: Request):
 async def get_settings(request: Request):
     from middleware.auth_middleware import get_current_user
     user = await get_current_user(request)
-    if user.get("global_role") not in ["GLOBAL_SUPER_ADMIN"]:
+    if user.get("global_role") not in ["ADMIN"]:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
     db = get_db(request)
     
@@ -178,7 +180,7 @@ import os
 async def update_settings(request: Request):
     from middleware.auth_middleware import get_current_user
     user = await get_current_user(request)
-    if user.get("global_role") not in ["GLOBAL_SUPER_ADMIN"]:
+    if user.get("global_role") not in ["ADMIN"]:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
     db = get_db(request)
     body = await request.json()

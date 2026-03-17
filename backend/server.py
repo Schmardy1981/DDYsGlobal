@@ -5,6 +5,8 @@ from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
+import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).parent
@@ -16,10 +18,33 @@ client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
 # Create the main app
-app = FastAPI(title="DDYs Compliance Platform", version="1.0.0")
+app = FastAPI(
+    title="DDYs Compliance Platform",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
+)
 
 # Store db in app state for route access
 app.state.db = db
+
+# Security Middleware (order matters: first added = outermost)
+from middleware.security_middleware import (
+    RateLimitMiddleware,
+    SecurityHeadersMiddleware,
+    InputSanitizationMiddleware,
+    RequestLoggingMiddleware,
+)
+
+app.add_middleware(RequestLoggingMiddleware)
+app.add_middleware(InputSanitizationMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(
+    RateLimitMiddleware,
+    default_limit=int(os.environ.get('RATE_LIMIT_DEFAULT', '100').split('/')[0]),
+    window_seconds=60,
+)
 
 # CORS
 app.add_middleware(
@@ -109,7 +134,7 @@ async def run_jobs_now_endpoint(request: Request):
     """Manually trigger all periodic jobs."""
     from middleware.auth_middleware import get_current_user
     user = await get_current_user(request)
-    if user.get("global_role") not in ["GLOBAL_SUPER_ADMIN", "DDYS_COMPLIANCE_MANAGER"]:
+    if user.get("global_role") not in ["ADMIN"]:
         from fastapi import HTTPException
         raise HTTPException(status_code=403, detail="Insufficient permissions")
     from services.periodic_jobs import run_jobs_now
@@ -156,7 +181,7 @@ async def get_job_intervals(request: Request):
 async def update_job_intervals(request: Request):
     from middleware.auth_middleware import get_current_user
     user = await get_current_user(request)
-    if user.get("global_role") not in ["GLOBAL_SUPER_ADMIN", "DDYS_COMPLIANCE_MANAGER"]:
+    if user.get("global_role") not in ["ADMIN"]:
         from fastapi import HTTPException as HE
         raise HE(status_code=403, detail="Insufficient permissions")
     body = await request.json()
@@ -169,7 +194,7 @@ async def update_job_intervals(request: Request):
     
     await db.system_settings.update_one(
         {"key": "job_intervals"},
-        {"$set": {"intervals": intervals, "updated_at": __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat()}},
+        {"$set": {"intervals": intervals, "updated_at": datetime.now(timezone.utc).isoformat()}},
         upsert=True
     )
     return {"message": "Intervals updated", "intervals": intervals}
@@ -268,12 +293,12 @@ async def get_prompts(request: Request):
 async def update_prompts(request: Request):
     from middleware.auth_middleware import get_current_user
     user = await get_current_user(request)
-    if user.get("global_role") not in ["GLOBAL_SUPER_ADMIN", "DDYS_COMPLIANCE_MANAGER"]:
+    if user.get("global_role") not in ["ADMIN"]:
         from fastapi import HTTPException as HE
         raise HE(status_code=403, detail="Insufficient permissions")
     
     body = await request.json()
-    updates = {"key": "prompts", "updated_at": __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat()}
+    updates = {"key": "prompts", "updated_at": datetime.now(timezone.utc).isoformat()}
     for key in ["osint_system", "osint_user", "docint_system"]:
         if key in body:
             updates[key] = body[key]
@@ -281,14 +306,14 @@ async def update_prompts(request: Request):
     await db.system_settings.update_one({"key": "prompts"}, {"$set": updates}, upsert=True)
     
     await db.audit_logs.insert_one({
-        "id": str(__import__('uuid').uuid4()),
+        "id": str(uuid.uuid4()),
         "tenant_id": "",
         "actor_user_id": user["user_id"],
         "actor_role": user.get("global_role", ""),
         "action_key": "prompts.updated",
         "entity_type": "system_settings",
         "entity_id": "prompts",
-        "timestamp": __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "before_json": None,
         "after_json": {k: v[:50] + "..." for k, v in updates.items() if k != "key"},
         "ip_address": request.client.host if request.client else "",

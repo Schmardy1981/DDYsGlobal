@@ -121,7 +121,7 @@ async def get_global_dashboard(request: Request):
     user = await get_current_user(request)
     db = get_db(request)
     
-    if user.get("global_role") not in ["GLOBAL_SUPER_ADMIN", "DDYS_COMPLIANCE_MANAGER"]:
+    if user.get("global_role") not in ["ADMIN", "CASE_MANAGER"]:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
     
     # Get per-tenant stats

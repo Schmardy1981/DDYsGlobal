@@ -1,0 +1,23 @@
+# DDYs Global Code Owners
+# Each line is a file pattern followed by one or more owners
+
+# Global
+* @Schmardy1981
+
+# Backend
+/backend/ @Schmardy1981
+/backend/middleware/ @Schmardy1981
+/backend/services/ @Schmardy1981
+
+# Frontend
+/frontend/ @Schmardy1981
+/frontend/src/pages/ @Schmardy1981
+
+# Infrastructure
+/docker-compose.yml @Schmardy1981
+/Dockerfile.* @Schmardy1981
+/.github/ @Schmardy1981
+
+# Security-sensitive
+/backend/middleware/auth_middleware.py @Schmardy1981
+/backend/middleware/security_middleware.py @Schmardy1981

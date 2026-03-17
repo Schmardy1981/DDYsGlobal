@@ -10,25 +10,110 @@ load_dotenv(Path(__file__).parent.parent / '.env')
 JWT_SECRET = os.environ.get('JWT_SECRET')
 security = HTTPBearer(auto_error=False)
 
+# =============================================================================
+# ROLE SYSTEM (4 Zugänge)
+# =============================================================================
+#
+# 1. ADMIN          — DDYs Plattform-Administratoren (voller Zugriff)
+# 2. CASE_MANAGER   — DDYs-Mitarbeiter die Bankkunden betreuen
+#                      (Case-Bearbeitung, QA, Screening, Maker/Checker)
+# 3. VIDEO_AGENT    — Mitarbeiter für Video-Identifikation
+# 4. BANK_USER      — Bankkunden (Tenant-scoped, nur eigene Kundendaten)
+#
+# END_CUSTOMER wird intern für Endkunden-Portal behalten (kein Staff-Zugang)
+# =============================================================================
+
 ROLE_HIERARCHY = {
-    "GLOBAL_SUPER_ADMIN": 100,
-    "DDYS_COMPLIANCE_MANAGER": 90,
-    "DDYS_QA_SECOND_LINE": 80,
-    "DDYS_QA_FIRST_LINE": 70,
-    "DDYS_RCM_CHECKER": 60,
-    "DDYS_RCM_MAKER": 50,
-    "TENANT_MLRO": 45,
-    "TENANT_COMPLIANCE_USER": 40,
-    "TENANT_ADMIN": 35,
-    "TENANT_BUSINESS_USER": 30,
-    "VIDEO_IDENT_AGENT": 20,
+    "ADMIN": 100,
+    "CASE_MANAGER": 80,
+    "VIDEO_AGENT": 50,
+    "BANK_USER": 30,
     "END_CUSTOMER": 10,
 }
 
 PORTAL_ACCESS = {
-    "admin": ["GLOBAL_SUPER_ADMIN", "DDYS_COMPLIANCE_MANAGER", "DDYS_QA_SECOND_LINE", "DDYS_QA_FIRST_LINE", "DDYS_RCM_CHECKER", "DDYS_RCM_MAKER"],
-    "tenant": ["GLOBAL_SUPER_ADMIN", "DDYS_COMPLIANCE_MANAGER", "DDYS_QA_SECOND_LINE", "DDYS_QA_FIRST_LINE", "DDYS_RCM_CHECKER", "DDYS_RCM_MAKER", "TENANT_ADMIN", "TENANT_BUSINESS_USER", "TENANT_COMPLIANCE_USER", "TENANT_MLRO", "VIDEO_IDENT_AGENT"],
+    "admin": ["ADMIN"],
+    "workspace": ["ADMIN", "CASE_MANAGER", "VIDEO_AGENT", "BANK_USER"],
     "customer": ["END_CUSTOMER"],
+}
+
+ROLE_PERMISSIONS = {
+    "ADMIN": {
+        "can_manage_tenants": True,
+        "can_manage_users": True,
+        "can_manage_settings": True,
+        "can_manage_policies": True,
+        "can_view_all_tenants": True,
+        "can_manage_cases": True,
+        "can_approve_cases": True,
+        "can_run_screening": True,
+        "can_manage_waivers": True,
+        "can_manage_edr": True,
+        "can_manage_qa": True,
+        "can_video_ident": True,
+        "can_view_mi": True,
+        "can_view_audit": True,
+        "can_export": True,
+        "can_manage_jobs": True,
+        "can_manage_prompts": True,
+    },
+    "CASE_MANAGER": {
+        "can_manage_tenants": False,
+        "can_manage_users": False,
+        "can_manage_settings": False,
+        "can_manage_policies": False,
+        "can_view_all_tenants": False,
+        "can_manage_cases": True,
+        "can_approve_cases": True,
+        "can_run_screening": True,
+        "can_manage_waivers": True,
+        "can_manage_edr": True,
+        "can_manage_qa": True,
+        "can_video_ident": False,
+        "can_view_mi": True,
+        "can_view_audit": True,
+        "can_export": True,
+        "can_manage_jobs": False,
+        "can_manage_prompts": False,
+    },
+    "VIDEO_AGENT": {
+        "can_manage_tenants": False,
+        "can_manage_users": False,
+        "can_manage_settings": False,
+        "can_manage_policies": False,
+        "can_view_all_tenants": False,
+        "can_manage_cases": False,
+        "can_approve_cases": False,
+        "can_run_screening": False,
+        "can_manage_waivers": False,
+        "can_manage_edr": False,
+        "can_manage_qa": False,
+        "can_video_ident": True,
+        "can_view_mi": False,
+        "can_view_audit": False,
+        "can_export": False,
+        "can_manage_jobs": False,
+        "can_manage_prompts": False,
+    },
+    "BANK_USER": {
+        "can_manage_tenants": False,
+        "can_manage_users": False,
+        "can_manage_settings": False,
+        "can_manage_policies": False,
+        "can_view_all_tenants": False,
+        "can_manage_cases": True,
+        "can_approve_cases": False,
+        "can_run_screening": False,
+        "can_manage_waivers": False,
+        "can_manage_edr": False,
+        "can_manage_qa": False,
+        "can_video_ident": False,
+        "can_view_mi": True,
+        "can_view_audit": True,
+        "can_export": True,
+        "can_manage_jobs": False,
+        "can_manage_prompts": False,
+    },
 }
 
 
@@ -62,17 +147,41 @@ def require_roles(*allowed_roles):
     return checker
 
 
+def require_permission(permission: str):
+    async def checker(request: Request):
+        user = await get_current_user(request)
+        role = user.get("global_role")
+        role_perms = ROLE_PERMISSIONS.get(role, {})
+        if not role_perms.get(permission, False):
+            raise HTTPException(status_code=403, detail=f"Missing permission: {permission}")
+        return user
+    return checker
+
+
 def require_tenant_access(tenant_id: str, user: dict):
-    if user.get("global_role") == "GLOBAL_SUPER_ADMIN":
+    role = user.get("global_role")
+
+    # ADMIN: Zugriff auf alle Tenants
+    if role == "ADMIN":
         return True
-    if user.get("global_role") in ["DDYS_COMPLIANCE_MANAGER", "DDYS_QA_SECOND_LINE", "DDYS_QA_FIRST_LINE", "DDYS_RCM_CHECKER", "DDYS_RCM_MAKER"]:
+
+    # CASE_MANAGER: Zugriff auf zugewiesene Tenants
+    if role == "CASE_MANAGER":
         tenant_roles = user.get("tenant_roles", [])
         for tr in tenant_roles:
             if tr.get("tenant_id") == tenant_id:
                 return True
-        return True  # DDYs staff has access to assigned tenants
+        raise HTTPException(status_code=403, detail="No access to this tenant")
+
+    # VIDEO_AGENT + BANK_USER: Nur zugewiesene Tenants
     tenant_roles = user.get("tenant_roles", [])
     for tr in tenant_roles:
         if tr.get("tenant_id") == tenant_id:
             return True
     raise HTTPException(status_code=403, detail="No access to this tenant")
+
+
+def get_user_tenant_ids(user: dict) -> list:
+    if user.get("global_role") == "ADMIN":
+        return []
+    return [tr["tenant_id"] for tr in user.get("tenant_roles", []) if tr.get("tenant_id")]

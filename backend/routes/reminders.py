@@ -35,8 +35,8 @@ async def send_reminder(request: Request):
 
     # Get customer email from parties or questionnaire
     customer_email = body.get("email")
+    session = await db.questionnaire_sessions.find_one({"case_id": case_id}, {"_id": 0})
     if not customer_email:
-        session = await db.questionnaire_sessions.find_one({"case_id": case_id}, {"_id": 0})
         if session and session.get("end_customer_user_id"):
             cust_user = await db.users.find_one({"id": session["end_customer_user_id"]}, {"_id": 0})
             if cust_user:
@@ -121,6 +121,8 @@ async def configure_auto_reminders(request: Request):
     """Configure automatic reminder schedule."""
     from middleware.auth_middleware import get_current_user
     user = await get_current_user(request)
+    if user.get("global_role") not in ["ADMIN", "CASE_MANAGER"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
     db = get_db(request)
     body = await request.json()
 

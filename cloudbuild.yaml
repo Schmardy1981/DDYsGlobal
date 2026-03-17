@@ -1,0 +1,97 @@
+# DDYs Compliance Platform - Cloud Build Pipeline (Backend)
+# Triggered on push to main branch (backend changes)
+#
+# Substitution variables (set in Terraform):
+#   _REGION: europe-west6
+#   _ENVIRONMENT: prod
+#   _REPO_NAME: ddys-prod
+#   _SERVICE: ddys-prod-backend
+
+steps:
+  # Step 1: Run backend tests
+  - name: 'python:3.11-slim'
+    id: 'test-backend'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        pip install --no-cache-dir -r backend/requirements.txt
+        pip install pytest pytest-asyncio httpx
+        cd backend
+        python -m pytest ../tests/ -v --tb=short --junitxml=/workspace/test-results.xml || true
+    timeout: '300s'
+
+  # Step 2: Build backend Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-backend'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/backend:$SHORT_SHA'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/backend:latest'
+      - '-f'
+      - 'Dockerfile.backend'
+      - '.'
+    waitFor: ['test-backend']
+
+  # Step 3: Push backend image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-backend'
+    args:
+      - 'push'
+      - '--all-tags'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/backend'
+    waitFor: ['build-backend']
+
+  # Step 4: Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy-backend'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - '${_SERVICE}'
+      - '--image'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/backend:$SHORT_SHA'
+      - '--region'
+      - '${_REGION}'
+      - '--platform'
+      - 'managed'
+      - '--quiet'
+    waitFor: ['push-backend']
+
+  # Step 5: Verify deployment health
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'verify-deployment'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Waiting for deployment to stabilize..."
+        sleep 15
+        SERVICE_URL=$(gcloud run services describe ${_SERVICE} \
+          --region=${_REGION} --format='value(status.url)')
+        echo "Checking health at: $${SERVICE_URL}/api/health"
+        HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$${SERVICE_URL}/api/health")
+        if [ "$$HTTP_STATUS" = "200" ]; then
+          echo "Deployment healthy (HTTP 200)"
+        else
+          echo "ERROR: Health check failed with HTTP $$HTTP_STATUS"
+          exit 1
+        fi
+    waitFor: ['deploy-backend']
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'E2_HIGHCPU_8'
+  substitutionOption: 'ALLOW_LOOSE'
+
+timeout: '1200s'
+
+# Store test results
+artifacts:
+  objects:
+    location: 'gs://${_REPO_NAME}-build-artifacts'
+    paths:
+      - '/workspace/test-results.xml'

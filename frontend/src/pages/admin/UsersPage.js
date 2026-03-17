@@ -9,10 +9,7 @@ import { Plus, UserPlus } from 'lucide-react';
 import api from '@/api/client';
 
 const ALL_ROLES = [
-  'GLOBAL_SUPER_ADMIN', 'DDYS_RCM_MAKER', 'DDYS_RCM_CHECKER',
-  'DDYS_QA_FIRST_LINE', 'DDYS_QA_SECOND_LINE', 'DDYS_COMPLIANCE_MANAGER',
-  'TENANT_ADMIN', 'TENANT_BUSINESS_USER', 'TENANT_COMPLIANCE_USER', 'TENANT_MLRO',
-  'VIDEO_IDENT_AGENT', 'END_CUSTOMER'
+  'ADMIN', 'CASE_MANAGER', 'VIDEO_AGENT', 'BANK_USER', 'END_CUSTOMER'
 ];
 
 export default function UsersPage() {
@@ -39,11 +36,11 @@ export default function UsersPage() {
   };
 
   const roleColor = (role) => {
-    if (role?.includes('ADMIN')) return 'bg-blue-100 text-blue-700 border-transparent';
-    if (role?.includes('MAKER') || role?.includes('CHECKER')) return 'bg-purple-100 text-purple-700 border-transparent';
-    if (role?.includes('MLRO')) return 'bg-red-100 text-red-700 border-transparent';
-    if (role?.includes('QA')) return 'bg-amber-100 text-amber-700 border-transparent';
-    if (role?.includes('COMPLIANCE')) return 'bg-teal-100 text-teal-700 border-transparent';
+    if (role === 'ADMIN') return 'bg-blue-100 text-blue-700 border-transparent';
+    if (role === 'CASE_MANAGER') return 'bg-purple-100 text-purple-700 border-transparent';
+    if (role === 'VIDEO_AGENT') return 'bg-amber-100 text-amber-700 border-transparent';
+    if (role === 'BANK_USER') return 'bg-green-100 text-green-700 border-transparent';
+    if (role === 'END_CUSTOMER') return 'bg-teal-100 text-teal-700 border-transparent';
     return 'bg-gray-100 text-gray-700 border-transparent';
   };
 

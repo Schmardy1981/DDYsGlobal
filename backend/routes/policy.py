@@ -44,6 +44,8 @@ async def list_rules(request: Request, tenant_id: Optional[str] = None, version_
 async def create_rule(request: Request):
     from middleware.auth_middleware import get_current_user
     user = await get_current_user(request)
+    if user.get("global_role") not in ["ADMIN"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
     db = get_db(request)
     body = await request.json()
     
@@ -82,6 +84,8 @@ async def create_rule(request: Request):
 async def update_rule(rule_id: str, request: Request):
     from middleware.auth_middleware import get_current_user
     user = await get_current_user(request)
+    if user.get("global_role") not in ["ADMIN"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
     db = get_db(request)
     body = await request.json()
     
@@ -119,6 +123,8 @@ async def update_rule(rule_id: str, request: Request):
 async def create_version(request: Request):
     from middleware.auth_middleware import get_current_user
     user = await get_current_user(request)
+    if user.get("global_role") not in ["ADMIN"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
     db = get_db(request)
     body = await request.json()
     

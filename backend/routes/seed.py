@@ -66,16 +66,12 @@ async def seed_all(db):
     
     # 3. Create demo users
     users_data = [
-        {"email": "admin@ddys.com", "name": "Platform Admin", "global_role": "GLOBAL_SUPER_ADMIN", "password": "Admin123!"},
-        {"email": "maker@ddys.com", "name": "Sarah Maker", "global_role": "DDYS_RCM_MAKER", "password": "Maker123!"},
-        {"email": "checker@ddys.com", "name": "Michael Checker", "global_role": "DDYS_RCM_CHECKER", "password": "Checker123!"},
-        {"email": "qa1@ddys.com", "name": "QA First Line", "global_role": "DDYS_QA_FIRST_LINE", "password": "QA1123!"},
-        {"email": "qa2@ddys.com", "name": "QA Second Line", "global_role": "DDYS_QA_SECOND_LINE", "password": "QA2123!"},
-        {"email": "compliance@ddys.com", "name": "Compliance Manager", "global_role": "DDYS_COMPLIANCE_MANAGER", "password": "Comp123!"},
-        {"email": "bankadmin@demobank.com", "name": "Bank Admin", "global_role": "TENANT_ADMIN", "password": "Bank123!"},
-        {"email": "business@demobank.com", "name": "Key Account Mgr", "global_role": "TENANT_BUSINESS_USER", "password": "Biz123!"},
-        {"email": "mlro@demobank.com", "name": "Dr. MLRO", "global_role": "TENANT_MLRO", "password": "MLRO123!"},
-        {"email": "compliance@demobank.com", "name": "Bank Compliance", "global_role": "TENANT_COMPLIANCE_USER", "password": "BComp123!"},
+        {"email": "admin@ddys.com", "name": "Platform Admin", "global_role": "ADMIN", "password": "Admin123!"},
+        {"email": "sarah@ddys.com", "name": "Sarah Müller", "global_role": "CASE_MANAGER", "password": "Case123!"},
+        {"email": "michael@ddys.com", "name": "Michael Weber", "global_role": "CASE_MANAGER", "password": "Case123!"},
+        {"email": "video@ddys.com", "name": "Lisa Schmidt", "global_role": "VIDEO_AGENT", "password": "Video123!"},
+        {"email": "bankadmin@demobank.com", "name": "Thomas Bank", "global_role": "BANK_USER", "password": "Bank123!"},
+        {"email": "compliance@demobank.com", "name": "Dr. Anna Compliance", "global_role": "BANK_USER", "password": "Bank123!"},
         {"email": "customer@example.com", "name": "John Customer", "global_role": "END_CUSTOMER", "password": "Cust123!"},
     ]
     
@@ -100,15 +96,11 @@ async def seed_all(db):
     
     # 4. Assign tenant roles
     tenant_role_assignments = [
-        ("maker@ddys.com", "DDYS_RCM_MAKER"),
-        ("checker@ddys.com", "DDYS_RCM_CHECKER"),
-        ("qa1@ddys.com", "DDYS_QA_FIRST_LINE"),
-        ("qa2@ddys.com", "DDYS_QA_SECOND_LINE"),
-        ("compliance@ddys.com", "DDYS_COMPLIANCE_MANAGER"),
-        ("bankadmin@demobank.com", "TENANT_ADMIN"),
-        ("business@demobank.com", "TENANT_BUSINESS_USER"),
-        ("mlro@demobank.com", "TENANT_MLRO"),
-        ("compliance@demobank.com", "TENANT_COMPLIANCE_USER"),
+        ("sarah@ddys.com", "CASE_MANAGER"),
+        ("michael@ddys.com", "CASE_MANAGER"),
+        ("video@ddys.com", "VIDEO_AGENT"),
+        ("bankadmin@demobank.com", "BANK_USER"),
+        ("compliance@demobank.com", "BANK_USER"),
     ]
     
     for email, role in tenant_role_assignments:
@@ -135,10 +127,10 @@ async def seed_all(db):
         "jurisdiction": "EU",
         "product_scope": "Corporate Banking",
         "nrd_date": None,
-        "created_by": user_ids["business@demobank.com"],
-        "assigned_maker_id": user_ids["maker@ddys.com"],
-        "assigned_checker_id": user_ids["checker@ddys.com"],
-        "assigned_mlro_id": user_ids["mlro@demobank.com"],
+        "created_by": user_ids["bankadmin@demobank.com"],
+        "assigned_maker_id": user_ids["sarah@ddys.com"],
+        "assigned_checker_id": user_ids["michael@ddys.com"],
+        "assigned_mlro_id": None,
         "sla_json": {"onboarding_target_days": 30},
         "narrative": "",
         "narrative_sections": {},

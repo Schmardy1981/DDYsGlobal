@@ -292,6 +292,8 @@ async def get_qa_settings(request: Request):
 async def update_qa_settings(request: Request):
     from middleware.auth_middleware import get_current_user
     user = await get_current_user(request)
+    if user.get("global_role") not in ["ADMIN", "CASE_MANAGER"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
     db = get_db(request)
     body = await request.json()
 

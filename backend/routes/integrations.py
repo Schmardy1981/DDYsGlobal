@@ -153,7 +153,7 @@ async def list_integrations(request: Request):
 async def update_integration(key: str, request: Request):
     from middleware.auth_middleware import get_current_user
     user = await get_current_user(request)
-    if user.get("global_role") not in ["GLOBAL_SUPER_ADMIN"]:
+    if user.get("global_role") not in ["ADMIN"]:
         raise HTTPException(status_code=403, detail="Only super admin can manage integrations")
     db = get_db(request)
     body = await request.json()

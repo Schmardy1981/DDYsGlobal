@@ -32,9 +32,9 @@ async def create_waiver(request: Request):
     risk = case.get("risk_rating", "medium")
     approval_chain = []
     if risk == "high":
-        approval_chain = ["TENANT_BUSINESS_USER", "business_unit_head", "TENANT_MLRO"]
+        approval_chain = ["case_manager", "business_unit_head", "mlro"]
     else:
-        approval_chain = ["TENANT_BUSINESS_USER", "TENANT_MLRO"]
+        approval_chain = ["case_manager", "compliance_officer"]
     
     waiver = {
         "id": str(uuid.uuid4()),

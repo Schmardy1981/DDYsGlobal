@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request
 from typing import Optional
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 router = APIRouter(prefix="/api/customer", tags=["customer_portal"])
 
@@ -276,7 +276,7 @@ async def accept_invite(token: str, request: Request):
         "code": otp_code,
         "tenant_id": invite["tenant_id"],
         "case_ref": invite.get("case_ref"),
-        "expires_at": (datetime.now(timezone.utc) + __import__('datetime').timedelta(minutes=10)).isoformat(),
+        "expires_at": (datetime.now(timezone.utc) + timedelta(minutes=10)).isoformat(),
         "used": False
     })
 
@@ -319,7 +319,6 @@ async def verify_invite_otp(token: str, request: Request):
     import jwt as pyjwt
     import os
     JWT_SECRET = os.environ.get('JWT_SECRET')
-    from datetime import timedelta
     token_payload = {
         "user_id": user["id"],
         "email": user["email"],

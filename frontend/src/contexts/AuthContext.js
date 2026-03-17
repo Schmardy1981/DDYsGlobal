@@ -3,8 +3,8 @@ import api from '@/api/client';
 
 const AuthContext = createContext(null);
 
-const ADMIN_ONLY_ROLES = ['GLOBAL_SUPER_ADMIN'];
-const WORKSPACE_ROLES = ['DDYS_COMPLIANCE_MANAGER', 'DDYS_QA_SECOND_LINE', 'DDYS_QA_FIRST_LINE', 'DDYS_RCM_CHECKER', 'DDYS_RCM_MAKER', 'TENANT_ADMIN', 'TENANT_BUSINESS_USER', 'TENANT_COMPLIANCE_USER', 'TENANT_MLRO', 'VIDEO_IDENT_AGENT'];
+const ADMIN_ONLY_ROLES = ['ADMIN'];
+const WORKSPACE_ROLES = ['CASE_MANAGER', 'VIDEO_AGENT', 'BANK_USER'];
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);

@@ -10,16 +10,11 @@ import { Shield, Lock, Eye, EyeOff, AlertCircle, X, ArrowRight } from 'lucide-re
 import api from '@/api/client';
 
 const ROLE_COLORS = {
-  GLOBAL_SUPER_ADMIN: 'bg-blue-100 text-blue-700',
-  DDYS_RCM_MAKER: 'bg-purple-100 text-purple-700',
-  DDYS_RCM_CHECKER: 'bg-purple-100 text-purple-700',
-  DDYS_QA_FIRST_LINE: 'bg-amber-100 text-amber-700',
-  DDYS_QA_SECOND_LINE: 'bg-amber-100 text-amber-700',
-  DDYS_COMPLIANCE_MANAGER: 'bg-teal-100 text-teal-700',
-  TENANT_ADMIN: 'bg-blue-100 text-blue-700',
-  TENANT_BUSINESS_USER: 'bg-green-100 text-green-700',
-  TENANT_COMPLIANCE_USER: 'bg-teal-100 text-teal-700',
-  TENANT_MLRO: 'bg-red-100 text-red-700',
+  ADMIN: 'bg-blue-100 text-blue-700',
+  CASE_MANAGER: 'bg-purple-100 text-purple-700',
+  VIDEO_AGENT: 'bg-amber-100 text-amber-700',
+  BANK_USER: 'bg-green-100 text-green-700',
+  END_CUSTOMER: 'bg-teal-100 text-teal-700',
 };
 
 export default function LoginPage() {
@@ -96,13 +91,13 @@ export default function LoginPage() {
   const redirectUser = (u) => {
     const role = u?.global_role;
     if (role === 'END_CUSTOMER') navigate('/portal');
-    else if (role === 'GLOBAL_SUPER_ADMIN') navigate('/admin');
+    else if (role === 'ADMIN') navigate('/admin');
     else navigate('/workspace/intake');
   };
 
   // Group users by category
-  const ddysUsers = users.filter(u => u.global_role?.startsWith('DDYS_') || u.global_role === 'GLOBAL_SUPER_ADMIN');
-  const tenantUsers = users.filter(u => u.global_role?.startsWith('TENANT_'));
+  const ddysUsers = users.filter(u => ['ADMIN', 'CASE_MANAGER', 'VIDEO_AGENT'].includes(u.global_role));
+  const tenantUsers = users.filter(u => u.global_role === 'BANK_USER');
 
   return (
     <div className="min-h-screen flex" data-testid="login-page">
@@ -160,7 +155,7 @@ export default function LoginPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge className={`${ROLE_COLORS[u.global_role] || 'bg-gray-100 text-gray-700'} border-transparent text-[10px]`}>
-                    {u.global_role?.replace(/^(DDYS_|GLOBAL_)/, '').replace(/_/g, ' ')}
+                    {u.global_role?.replace(/_/g, ' ')}
                   </Badge>
                   {quickLoading === u.email ? (
                     <span className="text-xs text-white/40">Loading...</span>
@@ -196,7 +191,7 @@ export default function LoginPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge className={`${ROLE_COLORS[u.global_role] || 'bg-gray-100 text-gray-700'} border-transparent text-[10px]`}>
-                    {u.global_role?.replace(/^TENANT_/, '').replace(/_/g, ' ')}
+                    {u.global_role?.replace(/_/g, ' ')}
                   </Badge>
                   {quickLoading === u.email ? (
                     <span className="text-xs text-white/40">Loading...</span>
@@ -270,7 +265,7 @@ export default function LoginPage() {
                   <button key={u.id} onClick={() => handleQuickLogin(u.email)} className="w-full flex items-center justify-between p-2 rounded hover:bg-[#F1F5F9] text-xs text-left" data-testid={`quick-mobile-${u.email}`}>
                     <span className="font-['JetBrains_Mono'] text-[#0F172A]">{u.email}</span>
                     <Badge className={`${ROLE_COLORS[u.global_role] || 'bg-gray-100'} border-transparent text-[9px]`}>
-                      {u.global_role?.replace(/^(DDYS_|GLOBAL_|TENANT_)/, '').replace(/_/g, ' ')}
+                      {u.global_role?.replace(/_/g, ' ')}
                     </Badge>
                   </button>
                 ))}

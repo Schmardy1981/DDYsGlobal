@@ -49,7 +49,7 @@ async def list_cases(request: Request, tenant_id: Optional[str] = None, status: 
     query = {"deleted": {"$ne": True}}
     if tenant_id:
         query["tenant_id"] = tenant_id
-    elif user.get("global_role") not in ["GLOBAL_SUPER_ADMIN", "DDYS_COMPLIANCE_MANAGER"]:
+    elif user.get("global_role") not in ["ADMIN"]:
         tenant_ids = [tr["tenant_id"] for tr in user.get("tenant_roles", [])]
         query["tenant_id"] = {"$in": tenant_ids}
     

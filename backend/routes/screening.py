@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request
 from typing import Optional
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 router = APIRouter(prefix="/api/screening", tags=["screening"])
 
@@ -156,8 +156,8 @@ async def dispose_hit(hit_id: str, request: Request):
                 "trigger_event_date": datetime.now(timezone.utc).isoformat(),
                 "detected_by": "system",
                 "alert_generated_at": datetime.now(timezone.utc).isoformat(),
-                "alert_review_due_at": (datetime.now(timezone.utc) + __import__('datetime').timedelta(days=28)).isoformat(),
-                "completion_due_at": (datetime.now(timezone.utc) + __import__('datetime').timedelta(days=90)).isoformat(),
+                "alert_review_due_at": (datetime.now(timezone.utc) + timedelta(days=28)).isoformat(),
+                "completion_due_at": (datetime.now(timezone.utc) + timedelta(days=90)).isoformat(),
                 "status": "open",
                 "escalation_to_mlro_at": None,
                 "created_at": datetime.now(timezone.utc).isoformat()

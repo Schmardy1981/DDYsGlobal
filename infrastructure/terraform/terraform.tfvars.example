@@ -1,0 +1,48 @@
+# DDYs Global Compliance Platform - Terraform Variables
+# Copy this file to terraform.tfvars and fill in the values
+# NEVER commit terraform.tfvars to version control!
+
+# --- Required ---
+project_id = "ddys-compliance-prod"   # Your GCP Project ID
+environment = "prod"                   # dev | staging | prod
+
+# --- Domain (required for production) ---
+domain_name = "compliance.ddys.ch"     # Your domain
+api_subdomain = "api"
+
+# --- MongoDB Atlas ---
+mongodb_atlas_org_id       = ""        # Get from Atlas Console
+mongodb_atlas_project_name = "ddys-compliance"
+mongodb_cluster_tier       = "M30"     # M10 for dev, M30+ for prod
+
+# --- Scaling ---
+backend_cpu           = "2"
+backend_memory        = "2Gi"
+backend_min_instances = 2
+backend_max_instances = 20
+backend_concurrency   = 80
+
+frontend_min_instances = 1
+frontend_max_instances = 5
+
+# --- Security ---
+cloud_armor_enabled    = true
+rate_limit_threshold   = 300
+
+# --- Alerting ---
+alert_email = "ops@ddys.ch"
+# alert_slack_webhook = "https://hooks.slack.com/services/..."
+
+# --- CI/CD ---
+github_owner  = "DDYsGlobal"
+github_repo   = "DDYsGlobal"
+github_branch = "main"
+
+# --- Tenants (initial) ---
+initial_tenant_ids = ["demo-bank", "swiss-trust-ag"]
+
+# --- Compliance ---
+document_retention_days = 3650  # 10 years (FINMA)
+
+# --- Budget ---
+budget_amount = 1500

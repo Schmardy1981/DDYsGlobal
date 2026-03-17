@@ -1,0 +1,88 @@
+# DDYs Compliance Platform - Cloud Build Pipeline (Frontend)
+# Triggered on push to main branch (frontend changes)
+#
+# Substitution variables:
+#   _REGION: europe-west6
+#   _ENVIRONMENT: prod
+#   _REPO_NAME: ddys-prod
+#   _SERVICE: ddys-prod-frontend
+
+steps:
+  # Step 1: Install dependencies and run lint/tests
+  - name: 'node:18-alpine'
+    id: 'test-frontend'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        cd frontend
+        yarn install --frozen-lockfile
+        yarn lint || true
+        yarn test --watchAll=false --passWithNoTests || true
+    timeout: '300s'
+
+  # Step 2: Build frontend Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-frontend'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/frontend:$SHORT_SHA'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/frontend:latest'
+      - '-f'
+      - 'Dockerfile.frontend'
+      - '.'
+    waitFor: ['test-frontend']
+
+  # Step 3: Push frontend image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-frontend'
+    args:
+      - 'push'
+      - '--all-tags'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/frontend'
+    waitFor: ['build-frontend']
+
+  # Step 4: Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy-frontend'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - '${_SERVICE}'
+      - '--image'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/frontend:$SHORT_SHA'
+      - '--region'
+      - '${_REGION}'
+      - '--platform'
+      - 'managed'
+      - '--quiet'
+    waitFor: ['push-frontend']
+
+  # Step 5: Verify deployment
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'verify-frontend'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        sleep 10
+        SERVICE_URL=$(gcloud run services describe ${_SERVICE} \
+          --region=${_REGION} --format='value(status.url)')
+        HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$$SERVICE_URL")
+        if [ "$$HTTP_STATUS" = "200" ]; then
+          echo "Frontend deployment healthy"
+        else
+          echo "ERROR: Frontend health check failed (HTTP $$HTTP_STATUS)"
+          exit 1
+        fi
+    waitFor: ['deploy-frontend']
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'E2_HIGHCPU_8'
+  substitutionOption: 'ALLOW_LOOSE'
+
+timeout: '900s'

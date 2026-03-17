@@ -31,7 +31,7 @@ async def list_tenants(request: Request):
     user = await get_current_user(request)
     db = get_db(request)
     
-    if user.get("global_role") in ["GLOBAL_SUPER_ADMIN", "DDYS_COMPLIANCE_MANAGER"]:
+    if user.get("global_role") in ["ADMIN", "CASE_MANAGER"]:
         tenants = await db.tenants.find({"deleted": {"$ne": True}}, {"_id": 0}).to_list(500)
     else:
         tenant_ids = [tr["tenant_id"] for tr in user.get("tenant_roles", [])]
@@ -43,7 +43,7 @@ async def list_tenants(request: Request):
 async def create_tenant(body: TenantCreate, request: Request):
     from middleware.auth_middleware import get_current_user
     user = await get_current_user(request)
-    if user.get("global_role") not in ["GLOBAL_SUPER_ADMIN"]:
+    if user.get("global_role") not in ["ADMIN"]:
         raise HTTPException(status_code=403, detail="Only super admin can create tenants")
     
     db = get_db(request)
@@ -139,7 +139,7 @@ async def get_tenant(tenant_id: str, request: Request):
 async def update_tenant(tenant_id: str, body: TenantUpdate, request: Request):
     from middleware.auth_middleware import get_current_user
     user = await get_current_user(request)
-    if user.get("global_role") not in ["GLOBAL_SUPER_ADMIN", "TENANT_ADMIN"]:
+    if user.get("global_role") not in ["ADMIN"]:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
     
     db = get_db(request)
@@ -212,6 +212,8 @@ async def get_tenant_regulations(tenant_id: str, request: Request):
 async def add_tenant_regulation(tenant_id: str, request: Request):
     from middleware.auth_middleware import get_current_user
     user = await get_current_user(request)
+    if user.get("global_role") not in ["ADMIN"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
     db = get_db(request)
     body = await request.json()
 
@@ -235,6 +237,8 @@ async def add_tenant_regulation(tenant_id: str, request: Request):
 async def update_tenant_regulation(tenant_id: str, reg_id: str, request: Request):
     from middleware.auth_middleware import get_current_user
     user = await get_current_user(request)
+    if user.get("global_role") not in ["ADMIN"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
     db = get_db(request)
     body = await request.json()
 
@@ -251,6 +255,8 @@ async def update_tenant_regulation(tenant_id: str, reg_id: str, request: Request
 async def delete_tenant_regulation(tenant_id: str, reg_id: str, request: Request):
     from middleware.auth_middleware import get_current_user
     user = await get_current_user(request)
+    if user.get("global_role") not in ["ADMIN"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
     db = get_db(request)
     await db.tenant_regulations.delete_one({"id": reg_id})
     return {"message": "Deleted"}
