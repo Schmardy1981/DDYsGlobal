@@ -197,6 +197,13 @@ async def update_integration(key: str, request: Request):
         upsert=True
     )
 
+    # Bust provider singletons so the new credentials take effect immediately.
+    try:
+        from services.providers import reset_provider_singletons
+        reset_provider_singletons()
+    except Exception:
+        pass
+
     await db.audit_logs.insert_one({
         "id": str(uuid.uuid4()),
         "tenant_id": "",

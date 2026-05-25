@@ -350,9 +350,10 @@ async def _handle_psi_incident(db, doc: dict):
     }
     await db.compliance_incidents.insert_one({**incident})
 
-    storage_path = doc.get("storage_path")
-    if storage_path:
+    storage_ref = doc.get("blob_path") or doc.get("storage_path")
+    if storage_ref:
         try:
-            os.remove(storage_path)
-        except OSError:
+            from services.storage import backend_for
+            await backend_for(doc).delete(doc.get("tenant_id", ""), storage_ref)
+        except Exception:  # noqa: BLE001 - best-effort cleanup
             pass

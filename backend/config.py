@@ -27,8 +27,15 @@ class Settings(BaseSettings):
     llm_provider: str = Field(default="emergent", alias="LLM_PROVIDER")
     llm_model: str = Field(default="claude-sonnet-4-20250514", alias="LLM_MODEL")
 
-    # Storage
+    # Storage (gcs | local). GCS is the production backend (Swiss residency).
     storage_type: str = Field(default="local", alias="STORAGE_TYPE")
+    local_storage_dir: str = Field(default="/app/backend/uploads", alias="LOCAL_STORAGE_DIR")
+    gcp_project_id: Optional[str] = Field(default=None, alias="GCP_PROJECT_ID")
+    gcp_region: str = Field(default="europe-west6", alias="GCP_REGION")
+    gcs_bucket_prefix: str = Field(default="ddys", alias="GCS_BUCKET_PREFIX")
+    gcs_default_bucket: Optional[str] = Field(default=None, alias="GCS_DEFAULT_BUCKET")
+    gcs_per_tenant_buckets: bool = Field(default=False, alias="GCS_PER_TENANT_BUCKETS")
+    # Legacy S3 fields kept for backwards compatibility with existing .env files.
     aws_access_key_id: Optional[str] = Field(default=None, alias="AWS_ACCESS_KEY_ID")
     aws_secret_access_key: Optional[str] = Field(default=None, alias="AWS_SECRET_ACCESS_KEY")
     aws_s3_bucket: Optional[str] = Field(default=None, alias="AWS_S3_BUCKET")

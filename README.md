@@ -115,7 +115,7 @@ Zusätzlich: `END_CUSTOMER` für das OTP-basierte Endkunden-Portal (kein Staff-L
 
 - **Frontend**: React 19, shadcn/ui, Tailwind CSS, React Router 7
 - **Backend**: FastAPI, MongoDB (async motor), Pydantic
-- **Auth**: JWT + TOTP 2FA, 12-role RBAC
+- **Auth**: JWT + TOTP 2FA, 4-role RBAC (ADMIN, CASE_MANAGER, VIDEO_AGENT, BANK_USER) plus END_CUSTOMER portal access
 - **AI**: Claude Sonnet (document intelligence, OSINT)
 - **Build**: CRA + Craco, Docker, GitHub Actions
 

@@ -123,7 +123,21 @@ async def health():
 
 @app.on_event("startup")
 async def startup_event():
-    """Start periodic background jobs on startup."""
+    """Run migrations, then start periodic background jobs."""
+    run_migrations_on_startup = os.environ.get("RUN_MIGRATIONS_ON_STARTUP", "true").lower() == "true"
+    if run_migrations_on_startup:
+        from migrations import run_migrations
+        try:
+            summary = await run_migrations(db)
+            logger.info(
+                "Migrations applied=%d skipped=%d total=%d",
+                len(summary["applied"]),
+                len(summary["skipped"]),
+                summary["total"],
+            )
+        except Exception:
+            logger.exception("Migration run failed; continuing startup")
+
     from services.periodic_jobs import start_periodic_jobs
     await start_periodic_jobs(db)
     logger.info("Periodic background jobs started")
@@ -327,21 +341,49 @@ async def update_prompts(request: Request):
 @app.get("/api/documents/view/{doc_id}")
 async def view_document_file(doc_id: str, request: Request):
     from middleware.auth_middleware import get_current_user
+    from services.storage import backend_for
+    from fastapi import HTTPException as HE
+    from fastapi.responses import Response, RedirectResponse
+
     user = await get_current_user(request)
     doc = await db.documents.find_one({"id": doc_id}, {"_id": 0})
     if not doc:
-        from fastapi import HTTPException as HE
         raise HE(status_code=404, detail="Document not found")
-    storage_path = doc.get("storage_path")
-    if not storage_path:
-        from fastapi import HTTPException as HE
+
+    storage_ref = doc.get("blob_path") or doc.get("storage_path")
+    if not storage_ref:
         raise HE(status_code=404, detail="File not available")
-    import os
-    if not os.path.exists(storage_path):
-        from fastapi import HTTPException as HE
-        raise HE(status_code=404, detail="File not found on disk")
+
+    backend = backend_for(doc)
+    tenant_id = doc.get("tenant_id", "")
     mime = doc.get("mime_type", "application/octet-stream")
-    return FileResponse(storage_path, media_type=mime, filename=doc.get("original_filename", "document"))
+    filename = doc.get("original_filename", "document")
+
+    # For GCS, prefer a short-lived signed URL so we don't proxy bytes through
+    # the API. Local files are streamed directly via FileResponse.
+    if (doc.get("storage_type") or "local").lower() == "gcs":
+        try:
+            signed = await backend.generate_view_url(tenant_id, storage_ref, expiration_minutes=15)
+            if signed:
+                return RedirectResponse(url=signed, status_code=302)
+        except Exception:
+            logger.exception("Signed URL generation failed; falling back to proxy download")
+        try:
+            content, content_type = await backend.download(tenant_id, storage_ref)
+        except PermissionError as exc:
+            raise HE(status_code=403, detail=str(exc))
+        except Exception:
+            raise HE(status_code=404, detail="File not found in storage")
+        return Response(
+            content=content,
+            media_type=content_type or mime,
+            headers={"Content-Disposition": f'inline; filename="{filename}"'},
+        )
+
+    # Local backend
+    if not os.path.exists(storage_ref):
+        raise HE(status_code=404, detail="File not found on disk")
+    return FileResponse(storage_ref, media_type=mime, filename=filename)
 
 
 
@@ -359,15 +401,38 @@ async def export_kyc(case_id: str, request: Request):
 @app.get("/api/export/download/{export_id}")
 async def download_export(export_id: str, request: Request):
     from middleware.auth_middleware import get_current_user
+    from services.storage import backend_for
+    from fastapi import HTTPException
+    from fastapi.responses import Response, RedirectResponse
+
     user = await get_current_user(request)
     export_rec = await db.kyc_exports.find_one({"id": export_id}, {"_id": 0})
     if not export_rec:
-        from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Export not found")
+
+    storage_ref = export_rec.get("blob_path") or export_rec.get("storage_path")
+    tenant_id = export_rec.get("tenant_id", "")
+    filename = export_rec["filename"]
+
+    if (export_rec.get("storage_type") or "local").lower() == "gcs":
+        backend = backend_for(export_rec)
+        try:
+            signed = await backend.generate_view_url(tenant_id, storage_ref, expiration_minutes=15)
+            if signed:
+                return RedirectResponse(url=signed, status_code=302)
+        except Exception:
+            logger.exception("Signed URL generation failed; falling back to proxy download")
+        content, content_type = await backend.download(tenant_id, storage_ref)
+        return Response(
+            content=content,
+            media_type=content_type or "application/zip",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+
     return FileResponse(
-        export_rec["storage_path"],
+        storage_ref,
         media_type="application/zip",
-        filename=export_rec["filename"]
+        filename=filename
     )
 
 

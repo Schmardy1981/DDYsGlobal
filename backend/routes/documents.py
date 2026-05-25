@@ -1,16 +1,11 @@
 from fastapi import APIRouter, HTTPException, Request, UploadFile, File, Form
 from typing import Optional
 import uuid
-import hashlib
-import os
-import aiofiles
 from datetime import datetime, timezone
-from pathlib import Path
+
+from services.storage import get_storage, backend_for
 
 router = APIRouter(prefix="/api/documents", tags=["documents"])
-
-UPLOAD_DIR = Path("/app/backend/uploads")
-UPLOAD_DIR.mkdir(exist_ok=True)
 
 
 def get_db(request: Request):
@@ -30,19 +25,29 @@ async def upload_document(
     from middleware.auth_middleware import get_current_user
     user = await get_current_user(request)
     db = get_db(request)
-    
-    # Read file and compute hash
+
     content = await file.read()
-    file_hash = hashlib.sha256(content).hexdigest()
-    
-    # Save to disk (in production: Supabase Storage)
-    file_ext = os.path.splitext(file.filename)[1] if file.filename else ".bin"
-    storage_filename = f"{uuid.uuid4()}{file_ext}"
-    storage_path = str(UPLOAD_DIR / storage_filename)
-    
-    async with aiofiles.open(storage_path, 'wb') as f:
-        await f.write(content)
-    
+
+    storage = get_storage()
+    try:
+        upload_meta = await storage.upload(
+            tenant_id=tenant_id,
+            case_id=case_id,
+            filename=file.filename or "upload.bin",
+            content=content,
+            content_type=file.content_type,
+            metadata={
+                "doc_type": doc_type,
+                "party_id": party_id or "",
+                "requirement_item_id": requirement_item_id or "",
+                "uploaded_by": user["user_id"],
+            },
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc))
+
     doc = {
         "id": str(uuid.uuid4()),
         "tenant_id": tenant_id,
@@ -50,12 +55,14 @@ async def upload_document(
         "party_id": party_id or None,
         "requirement_item_id": requirement_item_id or None,
         "doc_type": doc_type,
-        "original_filename": file.filename,
-        "storage_path": storage_path,
-        "storage_filename": storage_filename,
-        "file_hash": file_hash,
-        "file_size": len(content),
-        "mime_type": file.content_type,
+        "original_filename": upload_meta["original_filename"],
+        "storage_type": upload_meta["storage_type"],
+        "storage_path": upload_meta["storage_path"],
+        "blob_path": upload_meta.get("blob_path"),
+        "bucket": upload_meta.get("bucket"),
+        "file_hash": upload_meta["file_hash"],
+        "file_size": upload_meta["file_size"],
+        "mime_type": upload_meta["content_type"],
         "issued_date": None,
         "expiry_date": None,
         "recency_valid_until": None,
@@ -67,14 +74,14 @@ async def upload_document(
         "updated_at": datetime.now(timezone.utc).isoformat()
     }
     await db.documents.insert_one({**doc})
-    
+
     # Update requirement status if linked
     if requirement_item_id:
         await db.requirement_items.update_one(
             {"id": requirement_item_id},
             {"$set": {"status": "submitted", "updated_at": datetime.now(timezone.utc).isoformat()}}
         )
-    
+
     # Trigger document intelligence (async in background)
     from services.document_intelligence import analyze_document
     try:
@@ -85,7 +92,7 @@ async def upload_document(
     except Exception as e:
         import logging
         logging.getLogger(__name__).error(f"Doc intelligence error: {e}")
-    
+
     await db.audit_logs.insert_one({
         "id": str(uuid.uuid4()),
         "tenant_id": tenant_id,
@@ -96,11 +103,17 @@ async def upload_document(
         "entity_id": doc["id"],
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "before_json": None,
-        "after_json": {"id": doc["id"], "doc_type": doc_type, "filename": file.filename, "hash": file_hash},
+        "after_json": {
+            "id": doc["id"],
+            "doc_type": doc_type,
+            "filename": doc["original_filename"],
+            "hash": doc["file_hash"],
+            "storage_type": doc["storage_type"],
+        },
         "ip_address": request.client.host if request.client else "",
         "user_agent": request.headers.get("user-agent", "")
     })
-    
+
     return doc
 
 
@@ -109,13 +122,13 @@ async def list_documents(request: Request, case_id: Optional[str] = None, tenant
     from middleware.auth_middleware import get_current_user
     user = await get_current_user(request)
     db = get_db(request)
-    
+
     query = {}
     if case_id:
         query["case_id"] = case_id
     if tenant_id:
         query["tenant_id"] = tenant_id
-    
+
     docs = await db.documents.find(query, {"_id": 0}).to_list(500)
     return docs
 
@@ -125,16 +138,16 @@ async def get_document(doc_id: str, request: Request):
     from middleware.auth_middleware import get_current_user
     user = await get_current_user(request)
     db = get_db(request)
-    
+
     doc = await db.documents.find_one({"id": doc_id}, {"_id": 0})
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
-    
+
     # Get AI result if exists
     if doc.get("ai_result_id"):
         ai_result = await db.document_ai_results.find_one({"id": doc["ai_result_id"]}, {"_id": 0})
         doc["ai_result"] = ai_result
-    
+
     return doc
 
 
@@ -143,7 +156,7 @@ async def get_ai_result(doc_id: str, request: Request):
     from middleware.auth_middleware import get_current_user
     user = await get_current_user(request)
     db = get_db(request)
-    
+
     result = await db.document_ai_results.find_one({"document_id": doc_id}, {"_id": 0})
     if not result:
         raise HTTPException(status_code=404, detail="No AI result found")
@@ -155,18 +168,22 @@ async def reanalyze_document(doc_id: str, request: Request):
     from middleware.auth_middleware import get_current_user
     user = await get_current_user(request)
     db = get_db(request)
-    
+
     doc = await db.documents.find_one({"id": doc_id}, {"_id": 0})
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
-    
-    # Read file content
+
+    backend = backend_for(doc)
+    storage_ref = doc.get("blob_path") or doc.get("storage_path")
+    if not storage_ref:
+        raise HTTPException(status_code=404, detail="File reference missing")
     try:
-        async with aiofiles.open(doc["storage_path"], 'rb') as f:
-            content = await f.read()
+        content, _ = await backend.download(doc.get("tenant_id", ""), storage_ref)
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="File not found on disk")
-    
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc))
+
     from services.document_intelligence import analyze_document
     ai_result = await analyze_document(db, doc, content)
     return ai_result

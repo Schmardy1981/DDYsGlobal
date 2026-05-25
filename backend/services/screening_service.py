@@ -1,60 +1,64 @@
+"""Screening orchestration.
+
+The actual sanctions / PEP / adverse-media lookups are delegated to a pluggable
+provider (see :mod:`services.providers`). This module is responsible for
+turning a party record into a provider query, persisting hits, and keeping the
+legacy callable name (``mock_screen_party``) so existing routes keep working
+without a sweeping rename.
+"""
+
+from __future__ import annotations
+
 import uuid
-import random
 from datetime import datetime, timezone
 
+from .providers import get_screening_provider
+from .providers.base import ScreeningQuery
 
-async def mock_screen_party(db, screening_run: dict, party: dict, run_type: str) -> list:
-    """Mock screening for a party. Returns list of hits."""
-    
+
+def _party_display_name(party: dict) -> str:
     name = f"{party.get('first_name', '')} {party.get('last_name', '')}".strip()
-    if not name:
-        name = party.get("legal_name", "Unknown")
-    
-    hits = []
-    
-    # Simulate screening with ~20% hit rate for demo
-    if random.random() < 0.2:
-        hit_templates = {
-            "sanctions": [
-                {"list_source": "UN Security Council", "hit_severity": "high", "match_score": 0.85},
-                {"list_source": "EU Sanctions", "hit_severity": "high", "match_score": 0.72},
-                {"list_source": "OFAC SDN", "hit_severity": "high", "match_score": 0.68},
-            ],
-            "pep": [
-                {"list_source": "World-Check PEP", "hit_severity": "medium", "match_score": 0.78},
-                {"list_source": "PEP Database", "hit_severity": "medium", "match_score": 0.65},
-            ],
-            "adverse_media": [
-                {"list_source": "Adverse Media DB", "hit_severity": "low", "match_score": 0.55},
-                {"list_source": "News Analytics", "hit_severity": "medium", "match_score": 0.62},
-            ]
-        }
-        
-        templates = hit_templates.get(run_type, hit_templates["sanctions"])
-        template = random.choice(templates)
-        
-        hit = {
+    return name or party.get("legal_name") or "Unknown"
+
+
+async def screen_party(db, screening_run: dict, party: dict, run_type: str) -> list[dict]:
+    """Screen a single party and persist any hits. Returns the hit dicts."""
+    provider = await get_screening_provider(db)
+    query = ScreeningQuery(
+        tenant_id=screening_run["tenant_id"],
+        party_id=party["id"],
+        name=_party_display_name(party),
+        date_of_birth=party.get("date_of_birth"),
+        nationality=party.get("nationality"),
+        list_types=[run_type],
+    )
+    provider_hits = await provider.screen(query)
+
+    persisted: list[dict] = []
+    for hit in provider_hits:
+        rec = {
             "id": str(uuid.uuid4()),
             "screening_run_id": screening_run["id"],
             "party_id": party["id"],
             "tenant_id": screening_run["tenant_id"],
-            "hit_severity": template["hit_severity"],
-            "match_score": template["match_score"],
-            "matched_name": name + " (partial match)",
-            "list_source": template["list_source"],
-            "details_json": {
-                "matched_entity": name,
-                "match_type": "name_fuzzy",
-                "additional_info": f"Mock {run_type} hit for testing",
-                "source_url": f"https://example.com/{run_type}/reference"
-            },
+            "hit_severity": hit.hit_severity,
+            "match_score": hit.match_score,
+            "matched_name": hit.matched_name,
+            "list_source": hit.list_source,
+            "details_json": hit.details,
+            "list_type": hit.list_type,
+            "provider": provider.name,
             "disposition": "open",
             "decided_by": None,
             "decided_at": None,
             "notes": "",
-            "created_at": datetime.now(timezone.utc).isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat(),
         }
-        await db.screening_hits.insert_one({**hit})
-        hits.append(hit)
-    
-    return hits
+        await db.screening_hits.insert_one({**rec})
+        persisted.append(rec)
+
+    return persisted
+
+
+# Backwards-compatible alias for callers that still import the old name.
+mock_screen_party = screen_party

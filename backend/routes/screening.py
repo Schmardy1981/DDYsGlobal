@@ -30,12 +30,15 @@ async def run_screening(request: Request):
         "party_type": 1, "nationality": 1, "role_in_case": 1, "tenant_id": 1
     }).to_list(100)
     
+    from services.providers import get_screening_provider
+    provider = await get_screening_provider(db)
+
     screening_run = {
         "id": str(uuid.uuid4()),
         "tenant_id": case["tenant_id"],
         "case_id": case_id,
         "run_type": run_type,
-        "provider": "mock",
+        "provider": provider.name,
         "started_at": datetime.now(timezone.utc).isoformat(),
         "finished_at": None,
         "status": "running",
@@ -43,12 +46,11 @@ async def run_screening(request: Request):
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     await db.screening_runs.insert_one({**screening_run})
-    
-    # Run mock screening for each party
-    from services.screening_service import mock_screen_party
+
+    from services.screening_service import screen_party
     hits = []
     for party in parties:
-        party_hits = await mock_screen_party(db, screening_run, party, run_type)
+        party_hits = await screen_party(db, screening_run, party, run_type)
         hits.extend(party_hits)
     
     # Update run status

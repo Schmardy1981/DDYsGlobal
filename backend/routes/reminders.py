@@ -44,7 +44,26 @@ async def send_reminder(request: Request):
 
     missing_items = [r.get("requirement_label", r.get("requirement_key")) for r in missing_reqs]
 
-    # Create reminder record
+    from services.providers import get_email_provider
+    from services.providers.base import EmailMessage
+
+    subject = f"Action Required: Missing KYC Documents - {case.get('case_ref', '')}"
+    body = (
+        f"You have {len(missing_items)} missing or rejected document(s) for case "
+        f"{case.get('case_ref', '')}. Please log in to complete your onboarding.\n\n"
+        + "\n".join(f"- {item}" for item in missing_items)
+    )
+
+    send_result = None
+    email_provider = await get_email_provider(db)
+    if customer_email:
+        send_result = await email_provider.send(EmailMessage(
+            to=customer_email,
+            subject=subject,
+            body_text=body,
+            metadata={"tenant_id": case["tenant_id"], "case_id": case_id, "kind": "reminder"},
+        ))
+
     reminder = {
         "id": str(uuid.uuid4()),
         "tenant_id": case["tenant_id"],
@@ -52,13 +71,15 @@ async def send_reminder(request: Request):
         "case_ref": case.get("case_ref", ""),
         "type": "manual",
         "recipient_email": customer_email or "unknown",
-        "subject": f"Action Required: Missing KYC Documents - {case.get('case_ref', '')}",
+        "subject": subject,
         "missing_items": missing_items,
         "missing_count": len(missing_items),
         "sent_by": user["user_id"],
         "sent_by_name": user.get("name", ""),
-        "status": "sent",  # mock - would be 'sent' after email API call
-        "provider": "mock",
+        "status": "sent" if (send_result and send_result.success) else "failed",
+        "provider": email_provider.name,
+        "provider_message_id": send_result.message_id if send_result else None,
+        "provider_error": send_result.error if send_result else "no recipient",
         "sent_at": datetime.now(timezone.utc).isoformat(),
         "opened_at": None,
         "created_at": datetime.now(timezone.utc).isoformat()
@@ -94,8 +115,12 @@ async def send_reminder(request: Request):
     })
 
     return {
-        "message": f"Reminder sent for {len(missing_items)} missing items (MOCK - configure email in Settings)",
-        "sent": True,
+        "message": (
+            f"Reminder sent for {len(missing_items)} missing items via {email_provider.name}"
+            if reminder["status"] == "sent"
+            else f"Reminder NOT delivered: {reminder.get('provider_error')}"
+        ),
+        "sent": reminder["status"] == "sent",
         "reminder": reminder
     }
 
@@ -241,7 +266,19 @@ async def invite_customer(request: Request):
 
     invite_url = f"/portal/invite/{invite_token}"
 
-    # Create reminder record for tracking
+    from services.providers import get_email_provider
+    from services.providers.base import EmailMessage
+    email_provider = await get_email_provider(db)
+    send_result = await email_provider.send(EmailMessage(
+        to=email,
+        subject=f"KYC Onboarding Invitation - {case.get('case_ref', '')}",
+        body_text=(
+            f"You have been invited to complete KYC onboarding for case "
+            f"{case.get('case_ref', '')}.\n\nOpen your invitation: {invite_url}"
+        ),
+        metadata={"tenant_id": case["tenant_id"], "case_id": case_id, "kind": "invite"},
+    ))
+
     await db.email_reminders.insert_one({
         "id": str(uuid.uuid4()),
         "tenant_id": case["tenant_id"],
@@ -254,8 +291,10 @@ async def invite_customer(request: Request):
         "missing_count": 0,
         "sent_by": user["user_id"],
         "sent_by_name": user.get("name", ""),
-        "status": "sent",
-        "provider": "mock",
+        "status": "sent" if send_result.success else "failed",
+        "provider": email_provider.name,
+        "provider_message_id": send_result.message_id,
+        "provider_error": send_result.error,
         "sent_at": datetime.now(timezone.utc).isoformat(),
         "opened_at": None,
         "created_at": datetime.now(timezone.utc).isoformat()
@@ -277,8 +316,14 @@ async def invite_customer(request: Request):
     })
 
     return {
-        "message": f"Invitation sent to {email} (MOCK - configure email in Settings)",
+        "message": (
+            f"Invitation sent to {email} via {email_provider.name}"
+            if send_result.success
+            else f"Invitation NOT delivered: {send_result.error}"
+        ),
         "invite_url": invite_url,
         "invite_token": invite_token,
-        "invite": invite
+        "invite": invite,
+        "provider": email_provider.name,
+        "delivered": send_result.success,
     }
