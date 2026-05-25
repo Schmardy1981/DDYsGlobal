@@ -168,6 +168,45 @@ async def update_tenant(tenant_id: str, body: TenantUpdate, request: Request):
     return after
 
 
+@router.delete("/{tenant_id}")
+async def deactivate_tenant(tenant_id: str, request: Request):
+    """Soft-delete a tenant (mark deleted + status=inactive). ADMIN-only.
+
+    Previously there was no DELETE route, so the operational requirement
+    "deactivate tenants" could not be fulfilled from the API at all.
+    """
+    from middleware.auth_middleware import get_current_user
+    user = await get_current_user(request)
+    if user.get("global_role") not in ["ADMIN"]:
+        raise HTTPException(status_code=403, detail="Only ADMIN can deactivate tenants")
+    db = get_db(request)
+
+    before = await db.tenants.find_one({"id": tenant_id}, {"_id": 0})
+    if not before:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+
+    now = datetime.now(timezone.utc).isoformat()
+    await db.tenants.update_one(
+        {"id": tenant_id},
+        {"$set": {"deleted": True, "status": "inactive", "updated_at": now, "deactivated_by": user["user_id"]}}
+    )
+    await db.audit_logs.insert_one({
+        "id": str(uuid.uuid4()),
+        "tenant_id": tenant_id,
+        "actor_user_id": user["user_id"],
+        "actor_role": user.get("global_role", ""),
+        "action_key": "tenant.deactivated",
+        "entity_type": "tenant",
+        "entity_id": tenant_id,
+        "timestamp": now,
+        "before_json": {"status": before.get("status"), "deleted": before.get("deleted", False)},
+        "after_json": {"status": "inactive", "deleted": True},
+        "ip_address": request.client.host if request.client else "",
+        "user_agent": request.headers.get("user-agent", "")
+    })
+    return {"message": "Tenant deactivated", "tenant_id": tenant_id}
+
+
 @router.get("/{tenant_id}/users")
 async def list_tenant_users(tenant_id: str, request: Request):
     from middleware.auth_middleware import get_current_user, require_tenant_access

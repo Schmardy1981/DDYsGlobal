@@ -98,6 +98,11 @@ export default function CaseDetail() {
 
   const handleRiskAssess = async () => {
     try {
+      // Pass-through an empty `inputs` triggers the risk engine's
+      // auto-derive-from-case behavior: it computes country / industry /
+      // entity scores from the case's parties + screening signals. The
+      // backend will produce a real differentiated rating, not the old
+      // "always-medium" placeholder.
       await api.post('/risk/assess', { case_id: caseId, inputs: {} });
       loadCase();
     } catch (err) { alert(err.response?.data?.detail || 'Failed'); }
@@ -105,7 +110,9 @@ export default function CaseDetail() {
 
   const handleOsint = async (partyId) => {
     try {
-      await api.post('/osint/analyze', { case_id: caseId, party_id: partyId });
+      // Correct endpoint is /screening/osint — /osint/analyze still
+      // exists on the backend but /screening/osint is the canonical one.
+      await api.post('/screening/osint', { case_id: caseId, party_id: partyId });
       loadCase();
       alert('OSINT analysis complete');
     } catch (err) { alert(err.response?.data?.detail || 'Failed'); }

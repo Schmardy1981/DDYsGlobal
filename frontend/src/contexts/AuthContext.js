@@ -53,9 +53,9 @@ export function AuthProvider({ children }) {
   const getPortal = useCallback(() => {
     if (!user) return null;
     const role = user.global_role;
-    if (role === 'END_CUSTOMER') return 'customer';
+    if (role === 'END_CUSTOMER') return 'portal';
     if (ADMIN_ONLY_ROLES.includes(role)) return 'admin';
-    return 'tenant';
+    return 'workspace';
   }, [user]);
 
   const hasRole = useCallback((roles) => {

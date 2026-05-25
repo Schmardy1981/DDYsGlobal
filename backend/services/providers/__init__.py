@@ -48,8 +48,14 @@ async def _load_integration(db, key: str) -> dict:
     if db is None:
         return {}
     try:
-        rec = await db.integrations.find_one({"key": key, "enabled": True}, {"_id": 0})
-        return (rec or {}).get("values", {}) or {}
+        # Use the integrations route helper so password-typed fields are
+        # transparently decrypted. Reading the raw `values` dict gives us
+        # ciphertext after the encryption migration.
+        from routes.integrations import get_integration_values
+        rec = await db.integrations.find_one({"key": key, "enabled": True}, {"_id": 0, "key": 1})
+        if not rec:
+            return {}
+        return await get_integration_values(db, key)
     except Exception:  # noqa: BLE001 - DB optional
         return {}
 

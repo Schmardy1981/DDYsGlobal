@@ -40,10 +40,22 @@ import CustomerInvitePage from '@/pages/customer/CustomerInvitePage';
 import Questionnaire from '@/pages/customer/Questionnaire';
 import IntakeForm from '@/pages/customer/IntakeForm';
 
-function ProtectedRoute({ children }) {
-  const { isAuthenticated, loading } = useAuth();
+function ProtectedRoute({ children, portal }) {
+  // `portal` optionally narrows access: only users whose AuthContext
+  // resolves to that portal can see the route. Without this, a
+  // CASE_MANAGER navigating to /admin/* would render the admin shell
+  // (even though the API would 403 every request) — a UI leak about
+  // which admin surfaces exist.
+  const { isAuthenticated, loading, getPortal } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center text-sm text-[#64748B]">Loading...</div>;
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isAuthenticated) {
+    const isCustomer = window.location.pathname.startsWith('/portal');
+    return <Navigate to={isCustomer ? '/portal' : '/login'} replace />;
+  }
+  if (portal && getPortal && getPortal() !== portal) {
+    const target = getPortal ? `/${getPortal()}` : '/login';
+    return <Navigate to={target} replace />;
+  }
   return children;
 }
 
@@ -55,7 +67,7 @@ function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
       
       {/* Admin Routes */}
-      <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
+      <Route path="/admin" element={<ProtectedRoute portal="admin"><AdminLayout /></ProtectedRoute>}>
         <Route index element={<AdminDashboard />} />
         <Route path="tenants" element={<TenantsPage />} />
         <Route path="users" element={<UsersPage />} />
@@ -68,7 +80,7 @@ function AppRoutes() {
       </Route>
 
       {/* Tenant Workspace Routes */}
-      <Route path="/workspace" element={<ProtectedRoute><TenantLayout /></ProtectedRoute>}>
+      <Route path="/workspace" element={<ProtectedRoute portal="workspace"><TenantLayout /></ProtectedRoute>}>
         <Route index element={<Navigate to="/workspace/intake" replace />} />
         <Route path="intake" element={<IntakePage />} />
         <Route path="cases" element={<CasesPipeline />} />

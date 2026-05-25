@@ -13,13 +13,16 @@ def get_db(request: Request):
 
 @router.get("/reviews")
 async def list_qa_reviews(request: Request, tenant_id: Optional[str] = None, qa_type: Optional[str] = None):
-    from middleware.auth_middleware import get_current_user
+    from middleware.auth_middleware import (
+        get_current_user, has_permission, scope_tenant_query
+    )
     user = await get_current_user(request)
+    if not has_permission(user, "can_manage_qa"):
+        raise HTTPException(status_code=403, detail="Missing permission: can_manage_qa")
     db = get_db(request)
 
     query = {}
-    if tenant_id:
-        query["tenant_id"] = tenant_id
+    query = scope_tenant_query(user, query, tenant_id)
     if qa_type:
         query["qa_type"] = qa_type
 
@@ -29,15 +32,28 @@ async def list_qa_reviews(request: Request, tenant_id: Optional[str] = None, qa_
 
 @router.post("/reviews")
 async def create_qa_review(request: Request):
-    from middleware.auth_middleware import get_current_user
+    from middleware.auth_middleware import (
+        get_current_user, has_permission, require_tenant_access
+    )
     user = await get_current_user(request)
+    if not has_permission(user, "can_manage_qa"):
+        raise HTTPException(status_code=403, detail="Missing permission: can_manage_qa")
     db = get_db(request)
     body = await request.json()
 
+    tenant_id = body.get("tenant_id")
+    case_id = body.get("case_id")
+    if case_id:
+        case = await db.cases.find_one({"id": case_id}, {"_id": 0, "tenant_id": 1})
+        if not case:
+            raise HTTPException(status_code=404, detail="Case not found")
+        tenant_id = case["tenant_id"]
+    require_tenant_access(tenant_id or "", user)
+
     review = {
         "id": str(uuid.uuid4()),
-        "tenant_id": body.get("tenant_id"),
-        "case_id": body.get("case_id"),
+        "tenant_id": tenant_id,
+        "case_id": case_id,
         "qa_type": body.get("qa_type", "first_line"),
         "sampled_at": datetime.now(timezone.utc).isoformat(),
         "reviewer_id": user["user_id"],
@@ -56,7 +72,7 @@ async def create_qa_review(request: Request):
 
     await db.audit_logs.insert_one({
         "id": str(uuid.uuid4()),
-        "tenant_id": body.get("tenant_id", ""),
+        "tenant_id": tenant_id or "",
         "actor_user_id": user["user_id"],
         "actor_role": user.get("global_role", ""),
         "action_key": "qa_review.created",
@@ -74,15 +90,21 @@ async def create_qa_review(request: Request):
 
 @router.put("/reviews/{review_id}")
 async def update_qa_review(review_id: str, request: Request):
-    from middleware.auth_middleware import get_current_user
+    from middleware.auth_middleware import (
+        get_current_user, has_permission, require_tenant_access
+    )
     user = await get_current_user(request)
+    if not has_permission(user, "can_manage_qa"):
+        raise HTTPException(status_code=403, detail="Missing permission: can_manage_qa")
     db = get_db(request)
     body = await request.json()
 
     review = await db.qa_reviews.find_one({"id": review_id}, {"_id": 0})
     if not review:
         raise HTTPException(status_code=404, detail="QA review not found")
+    require_tenant_access(review.get("tenant_id", ""), user)
 
+    before = dict(review)
     updates = {}
     for key in ["findings_json", "severity", "remediation_required", "remediation_notes", "remediation_due_date", "status"]:
         if key in body:
@@ -94,14 +116,33 @@ async def update_qa_review(review_id: str, request: Request):
     updates["updated_at"] = datetime.now(timezone.utc).isoformat()
     await db.qa_reviews.update_one({"id": review_id}, {"$set": updates})
 
+    await db.audit_logs.insert_one({
+        "id": str(uuid.uuid4()),
+        "tenant_id": review.get("tenant_id", ""),
+        "actor_user_id": user["user_id"],
+        "actor_role": user.get("global_role", ""),
+        "action_key": "qa_review.updated",
+        "entity_type": "qa_review",
+        "entity_id": review_id,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "before_json": before,
+        "after_json": updates,
+        "ip_address": request.client.host if request.client else "",
+        "user_agent": request.headers.get("user-agent", "")
+    })
+
     return await db.qa_reviews.find_one({"id": review_id}, {"_id": 0})
 
 
 @router.post("/sample")
 async def generate_qa_sample(request: Request):
     """Generate a QA sample from completed cases."""
-    from middleware.auth_middleware import get_current_user
+    from middleware.auth_middleware import (
+        get_current_user, has_permission, scope_tenant_query
+    )
     user = await get_current_user(request)
+    if not has_permission(user, "can_manage_qa"):
+        raise HTTPException(status_code=403, detail="Missing permission: can_manage_qa")
     db = get_db(request)
     body = await request.json()
 
@@ -109,7 +150,6 @@ async def generate_qa_sample(request: Request):
     sample_pct = body.get("sample_percent", 5)
     qa_type = body.get("qa_type", "first_line")
 
-    # Get completed cases from last 30 days
     from datetime import timedelta
     cutoff = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
 
@@ -118,15 +158,13 @@ async def generate_qa_sample(request: Request):
         "updated_at": {"$gte": cutoff},
         "deleted": {"$ne": True}
     }
-    if tenant_id:
-        query["tenant_id"] = tenant_id
+    query = scope_tenant_query(user, query, tenant_id)
 
     completed = await db.cases.find(query, {"_id": 0}).to_list(5000)
 
     if not completed:
         return {"message": "No completed cases to sample", "sample": []}
 
-    # Risk-weighted sampling: high-risk cases have 3x weight, medium 2x
     weighted_pool = []
     for c in completed:
         risk = c.get("risk_rating", "low")
@@ -136,7 +174,6 @@ async def generate_qa_sample(request: Request):
     sample_size = max(1, int(len(completed) * sample_pct / 100))
     sample_size = min(sample_size, len(completed))
 
-    # Random sample from weighted pool, deduplicated
     sampled = []
     sampled_ids = set()
     random.shuffle(weighted_pool)
@@ -145,10 +182,8 @@ async def generate_qa_sample(request: Request):
             sampled.append(c)
             sampled_ids.add(c["id"])
 
-    # Auto-create QA reviews for each sampled case
     created_reviews = []
     for c in sampled:
-        # Check if QA review already exists this month
         existing = await db.qa_reviews.find_one({
             "case_id": c["id"],
             "qa_type": qa_type,
@@ -192,8 +227,12 @@ async def generate_qa_sample(request: Request):
 @router.get("/governance-pack")
 async def get_governance_pack(request: Request, tenant_id: Optional[str] = None):
     """Generate monthly QA governance council pack data."""
-    from middleware.auth_middleware import get_current_user
+    from middleware.auth_middleware import (
+        get_current_user, has_permission, scope_tenant_query
+    )
     user = await get_current_user(request)
+    if not has_permission(user, "can_manage_qa"):
+        raise HTTPException(status_code=403, detail="Missing permission: can_manage_qa")
     db = get_db(request)
 
     from datetime import timedelta
@@ -201,10 +240,8 @@ async def get_governance_pack(request: Request, tenant_id: Optional[str] = None)
     month_ago = (now - timedelta(days=30)).isoformat()
 
     query = {}
-    if tenant_id:
-        query["tenant_id"] = tenant_id
+    query = scope_tenant_query(user, query, tenant_id)
 
-    # All reviews this month
     reviews = await db.qa_reviews.find(
         {**query, "created_at": {"$gte": month_ago}},
         {"_id": 0}
@@ -238,7 +275,6 @@ async def get_governance_pack(request: Request, tenant_id: Optional[str] = None)
                 "severity": r.get("severity")
             })
 
-    # Trends (compare with prior month)
     two_months_ago = (now - timedelta(days=60)).isoformat()
     prior_reviews = await db.qa_reviews.find(
         {**query, "created_at": {"$gte": two_months_ago, "$lt": month_ago}},
@@ -271,8 +307,10 @@ async def get_governance_pack(request: Request, tenant_id: Optional[str] = None)
 
 @router.get("/settings")
 async def get_qa_settings(request: Request):
-    from middleware.auth_middleware import get_current_user
+    from middleware.auth_middleware import get_current_user, has_permission
     user = await get_current_user(request)
+    if not has_permission(user, "can_manage_qa"):
+        raise HTTPException(status_code=403, detail="Missing permission: can_manage_qa")
     db = get_db(request)
 
     settings = await db.system_settings.find_one({"key": "qa_settings"}, {"_id": 0})

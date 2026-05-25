@@ -215,11 +215,34 @@ async def update_job_intervals(request: Request):
 
 
 @app.post("/api/seed")
-async def seed_data():
-    """Public seed endpoint for initial setup."""
-    existing = await db.tenants.find_one({"name": "Demo Bank"}, {"_id": 0})
-    if existing:
-        return {"message": "Demo data already exists", "tenant_id": existing["id"]}
+async def seed_data(request: Request):
+    """Initial-setup seed endpoint.
+
+    Hardened: this route is now reachable only when one of these is true:
+
+    1. The database is completely empty (no `tenants` records at all).
+       This is the legitimate first-run case.
+    2. The caller is an authenticated ADMIN.
+
+    Otherwise we 403. The previous implementation was fully public and
+    re-creating the default ADMIN account remotely is an instant root
+    takeover in production.
+    """
+    from fastapi import HTTPException as HE
+    has_any_tenant = await db.tenants.find_one({}, {"_id": 0, "id": 1})
+    if has_any_tenant:
+        # Demo data already present? Treat the call as idempotent for
+        # admins; for anyone else, 403.
+        try:
+            from middleware.auth_middleware import get_current_user
+            user = await get_current_user(request)
+        except HE:
+            raise HE(status_code=403, detail="Seed only allowed on empty database")
+        if user.get("global_role") != "ADMIN":
+            raise HE(status_code=403, detail="Only ADMIN can re-seed")
+        existing = await db.tenants.find_one({"name": "Demo Bank"}, {"_id": 0})
+        if existing:
+            return {"message": "Demo data already exists", "tenant_id": existing["id"]}
     from routes.seed import seed_all
     result = await seed_all(db)
     return result
@@ -228,11 +251,24 @@ async def seed_data():
 # OSINT endpoint
 @app.post("/api/osint/analyze")
 async def osint_analyze(request: Request):
-    from middleware.auth_middleware import get_current_user
+    from middleware.auth_middleware import (
+        get_current_user, has_permission, require_tenant_access
+    )
+    from fastapi import HTTPException as HE
     user = await get_current_user(request)
+    if not has_permission(user, "can_run_screening"):
+        raise HE(status_code=403, detail="Missing permission: can_run_screening")
     body = await request.json()
+    case_id = body.get("case_id")
+    party_id = body.get("party_id")
+    if not case_id or not party_id:
+        raise HE(status_code=400, detail="case_id and party_id required")
+    case = await db.cases.find_one({"id": case_id}, {"_id": 0, "tenant_id": 1})
+    if not case:
+        raise HE(status_code=404, detail="Case not found")
+    require_tenant_access(case["tenant_id"], user)
     from services.osint_service import run_osint_analysis
-    result = await run_osint_analysis(db, body["case_id"], body["party_id"])
+    result = await run_osint_analysis(db, case_id, party_id)
     return result
 
 
@@ -287,9 +323,12 @@ Respond ONLY with valid JSON."""
 
 @app.get("/api/prompts")
 async def get_prompts(request: Request):
-    from middleware.auth_middleware import get_current_user
+    from middleware.auth_middleware import get_current_user, has_permission
     user = await get_current_user(request)
-    
+    if not has_permission(user, "can_manage_prompts"):
+        from fastapi import HTTPException as HE
+        raise HE(status_code=403, detail="Missing permission: can_manage_prompts")
+
     saved = await db.system_settings.find_one({"key": "prompts"}, {"_id": 0})
     return {
         "osint_system": saved.get("osint_system", DEFAULT_OSINT_SYSTEM_PROMPT) if saved else DEFAULT_OSINT_SYSTEM_PROMPT,
@@ -340,15 +379,33 @@ async def update_prompts(request: Request):
 # Document file viewer
 @app.get("/api/documents/view/{doc_id}")
 async def view_document_file(doc_id: str, request: Request):
-    from middleware.auth_middleware import get_current_user
+    from middleware.auth_middleware import (
+        get_current_user, require_tenant_access, require_customer_case_access
+    )
     from services.storage import backend_for
     from fastapi import HTTPException as HE
     from fastapi.responses import Response, RedirectResponse
 
+    # Support either Authorization header (normal API clients) or a
+    # `?token=` query param so `window.open` from the frontend can pass a
+    # token without needing custom headers.
+    if not request.headers.get("Authorization"):
+        token = request.query_params.get("token")
+        if token:
+            # Mutate the request scope so get_current_user sees it.
+            request.scope["headers"] = list(request.scope["headers"]) + [
+                (b"authorization", f"Bearer {token}".encode("latin-1"))
+            ]
     user = await get_current_user(request)
     doc = await db.documents.find_one({"id": doc_id}, {"_id": 0})
     if not doc:
         raise HE(status_code=404, detail="Document not found")
+
+    if user.get("global_role") == "END_CUSTOMER":
+        case = await db.cases.find_one({"id": doc.get("case_id")}, {"_id": 0})
+        require_customer_case_access(user, case)
+    else:
+        require_tenant_access(doc.get("tenant_id", ""), user)
 
     storage_ref = doc.get("blob_path") or doc.get("storage_path")
     if not storage_ref:
@@ -391,8 +448,17 @@ async def view_document_file(doc_id: str, request: Request):
 # KYC Export endpoint
 @app.post("/api/export/kyc/{case_id}")
 async def export_kyc(case_id: str, request: Request):
-    from middleware.auth_middleware import get_current_user
+    from middleware.auth_middleware import (
+        get_current_user, has_permission, require_tenant_access
+    )
+    from fastapi import HTTPException as HE
     user = await get_current_user(request)
+    if not has_permission(user, "can_export"):
+        raise HE(status_code=403, detail="Missing permission: can_export")
+    case = await db.cases.find_one({"id": case_id}, {"_id": 0, "tenant_id": 1})
+    if not case:
+        raise HE(status_code=404, detail="Case not found")
+    require_tenant_access(case["tenant_id"], user)
     from services.export_service import export_kyc_file
     result = await export_kyc_file(db, case_id)
     return result
@@ -400,15 +466,27 @@ async def export_kyc(case_id: str, request: Request):
 
 @app.get("/api/export/download/{export_id}")
 async def download_export(export_id: str, request: Request):
-    from middleware.auth_middleware import get_current_user
+    from middleware.auth_middleware import (
+        get_current_user, has_permission, require_tenant_access
+    )
     from services.storage import backend_for
     from fastapi import HTTPException
     from fastapi.responses import Response, RedirectResponse
 
+    # Same `?token=` fallback as the document viewer for window.open links.
+    if not request.headers.get("Authorization"):
+        token = request.query_params.get("token")
+        if token:
+            request.scope["headers"] = list(request.scope["headers"]) + [
+                (b"authorization", f"Bearer {token}".encode("latin-1"))
+            ]
     user = await get_current_user(request)
+    if not has_permission(user, "can_export"):
+        raise HTTPException(status_code=403, detail="Missing permission: can_export")
     export_rec = await db.kyc_exports.find_one({"id": export_id}, {"_id": 0})
     if not export_rec:
         raise HTTPException(status_code=404, detail="Export not found")
+    require_tenant_access(export_rec.get("tenant_id", ""), user)
 
     storage_ref = export_rec.get("blob_path") or export_rec.get("storage_path")
     tenant_id = export_rec.get("tenant_id", "")

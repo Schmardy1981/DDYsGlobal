@@ -13,8 +13,12 @@ def get_db(request: Request):
 @router.post("/send")
 async def send_reminder(request: Request):
     """Manually send a reminder for missing documents on a case."""
-    from middleware.auth_middleware import get_current_user
+    from middleware.auth_middleware import (
+        get_current_user, has_permission, require_tenant_access
+    )
     user = await get_current_user(request)
+    if not has_permission(user, "can_manage_cases"):
+        raise HTTPException(status_code=403, detail="Missing permission: can_manage_cases")
     db = get_db(request)
     body = await request.json()
 
@@ -22,6 +26,7 @@ async def send_reminder(request: Request):
     case = await db.cases.find_one({"id": case_id}, {"_id": 0})
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
+    require_tenant_access(case["tenant_id"], user)
 
     # Get missing requirements
     missing_reqs = await db.requirement_items.find({
@@ -127,15 +132,21 @@ async def send_reminder(request: Request):
 
 @router.get("")
 async def list_reminders(request: Request, case_id: Optional[str] = None, tenant_id: Optional[str] = None):
-    from middleware.auth_middleware import get_current_user
+    from middleware.auth_middleware import (
+        get_current_user, scope_tenant_query, require_tenant_access
+    )
     user = await get_current_user(request)
     db = get_db(request)
 
     query = {}
     if case_id:
+        case = await db.cases.find_one({"id": case_id}, {"_id": 0, "tenant_id": 1})
+        if not case:
+            raise HTTPException(status_code=404, detail="Case not found")
+        require_tenant_access(case["tenant_id"], user)
         query["case_id"] = case_id
-    if tenant_id:
-        query["tenant_id"] = tenant_id
+    else:
+        query = scope_tenant_query(user, query, tenant_id)
 
     reminders = await db.email_reminders.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
     return reminders
@@ -187,17 +198,25 @@ async def get_auto_config(request: Request):
 @router.post("/invite-customer")
 async def invite_customer(request: Request):
     """Send a customer invitation link from inside the system."""
-    from middleware.auth_middleware import get_current_user
+    from middleware.auth_middleware import (
+        get_current_user, has_permission, require_tenant_access
+    )
+    from datetime import datetime, timezone, timedelta
     user = await get_current_user(request)
+    if not has_permission(user, "can_manage_cases"):
+        raise HTTPException(status_code=403, detail="Missing permission: can_manage_cases")
     db = get_db(request)
     body = await request.json()
 
     case_id = body.get("case_id")
-    email = body.get("email")
+    email = (body.get("email") or "").strip().lower()
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="Valid email required")
 
     case = await db.cases.find_one({"id": case_id}, {"_id": 0})
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
+    require_tenant_access(case["tenant_id"], user)
 
     # Generate invite token
     invite_token = str(uuid.uuid4())
@@ -218,7 +237,11 @@ async def invite_customer(request: Request):
         }
         await db.users.insert_one({**cust_user})
 
-    # Save invite
+    # Save invite — with an explicit expiry so leaked links can't be
+    # replayed months later. 14 days is the default; admins can override
+    # via the env var.
+    invite_ttl_days = int(__import__("os").environ.get("INVITE_TTL_DAYS", "14"))
+    expires_at = (datetime.now(timezone.utc) + timedelta(days=invite_ttl_days)).isoformat()
     invite = {
         "id": str(uuid.uuid4()),
         "tenant_id": case["tenant_id"],
@@ -230,6 +253,7 @@ async def invite_customer(request: Request):
         "status": "sent",
         "created_by": user["user_id"],
         "created_at": datetime.now(timezone.utc).isoformat(),
+        "expires_at": expires_at,
         "accepted_at": None
     }
     await db.customer_invites.insert_one({**invite})

@@ -30,25 +30,41 @@ export default function Questionnaire() {
   });
   const [loading, setLoading] = useState(false);
 
+  // Two entry paths land here with different localStorage keys:
+  //  - Public landing: writes `ddys_customer_case_ref` + `ddys_customer_tenant`
+  //  - Invite acceptance: writes `ddys_customer_case_id` + `ddys_customer_tenant`
+  // We must support both so the invite flow's "Start Questionnaire" CTA
+  // doesn't 404 immediately.
   const caseRef = localStorage.getItem('ddys_customer_case_ref');
+  const caseIdStored = localStorage.getItem('ddys_customer_case_id');
   const tenantId = localStorage.getItem('ddys_customer_tenant');
 
   useEffect(() => {
-    // Load existing case to get case_id
-    const params = new URLSearchParams();
-    if (caseRef) params.set('case_ref', caseRef);
-    if (tenantId) params.set('tenant_id', tenantId);
-    api.get(`/customer/case?${params}`).then(r => {
-      if (r.data?.case?.id) {
-        // Start or resume questionnaire
-        api.post('/customer/questionnaire/start', { case_id: r.data.case.id }).then(s => {
-          setSession(s.data);
-          if (s.data.answers_json && Object.keys(s.data.answers_json).length > 0) {
-            setAnswers(prev => ({ ...prev, ...s.data.answers_json }));
-          }
-        });
-      }
-    }).catch(console.error);
+    const startSession = (caseId) => {
+      api.post('/customer/questionnaire/start', { case_id: caseId }).then(s => {
+        setSession(s.data);
+        if (s.data.answers_json && Object.keys(s.data.answers_json).length > 0) {
+          setAnswers(prev => ({ ...prev, ...s.data.answers_json }));
+        }
+      }).catch(console.error);
+    };
+
+    if (caseIdStored) {
+      // Invite flow: we already have the case_id directly.
+      api.get(`/customer/case-by-id/${caseIdStored}`).then(r => {
+        if (r.data?.case?.id) startSession(r.data.case.id);
+      }).catch(console.error);
+      return;
+    }
+
+    if (caseRef) {
+      const params = new URLSearchParams();
+      params.set('case_ref', caseRef);
+      if (tenantId) params.set('tenant_id', tenantId);
+      api.get(`/customer/case?${params}`).then(r => {
+        if (r.data?.case?.id) startSession(r.data.case.id);
+      }).catch(console.error);
+    }
   }, []);
 
   const handleNext = async () => {

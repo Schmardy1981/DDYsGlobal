@@ -16,6 +16,28 @@ CASE_TYPES = ["onboarding", "rr", "edr_full", "kup", "npe", "exit"]
 RISK_RATINGS = ["low", "medium", "high"]
 DD_LEVELS = ["cdd", "edd"]
 
+# Single source of truth for what state-to-state transitions are allowed.
+# `rejected` is now reachable from any review state; the previous version
+# made it unreachable, leaving it as dead data referenced by MI dashboards.
+# `customer_in_progress -> draft` lets staff cancel a stuck onboarding.
+VALID_TRANSITIONS = {
+    "draft": ["customer_in_progress", "rejected"],
+    "customer_in_progress": ["customer_submitted", "draft", "rejected"],
+    "customer_submitted": ["automated_checks", "rejected", "maker_review"],
+    "automated_checks": ["maker_review", "rejected"],
+    "maker_review": ["checker_review", "customer_in_progress", "rejected"],
+    "checker_review": [
+        "maker_review", "business_approval", "compliance_approval",
+        "completed", "rejected"
+    ],
+    "business_approval": ["compliance_approval", "mlro_approval", "completed", "rejected"],
+    "compliance_approval": ["mlro_approval", "completed", "rejected"],
+    "mlro_approval": ["completed", "rejected"],
+    "completed": ["restricted", "offboarded"],
+    "restricted": ["maker_review", "offboarded"],
+    "rejected": ["offboarded"],
+}
+
 
 class CaseCreate(BaseModel):
     tenant_id: str
@@ -24,7 +46,7 @@ class CaseCreate(BaseModel):
     product_scope: Optional[str] = None
 
 class CaseUpdate(BaseModel):
-    status: Optional[str] = None
+    status: Optional[str] = None  # ignored — use /transition or /status with proper guards
     risk_rating: Optional[str] = None
     due_diligence_level: Optional[str] = None
     jurisdiction: Optional[str] = None
@@ -42,24 +64,26 @@ def get_db(request: Request):
 
 @router.get("")
 async def list_cases(request: Request, tenant_id: Optional[str] = None, status: Optional[str] = None, risk_rating: Optional[str] = None, case_type: Optional[str] = None):
-    from middleware.auth_middleware import get_current_user
+    from middleware.auth_middleware import (
+        get_current_user, has_permission, scope_tenant_query
+    )
     user = await get_current_user(request)
+    if not has_permission(user, "can_manage_cases"):
+        raise HTTPException(status_code=403, detail="Missing permission: can_manage_cases")
     db = get_db(request)
-    
+
     query = {"deleted": {"$ne": True}}
-    if tenant_id:
-        query["tenant_id"] = tenant_id
-    elif user.get("global_role") not in ["ADMIN"]:
-        tenant_ids = [tr["tenant_id"] for tr in user.get("tenant_roles", [])]
-        query["tenant_id"] = {"$in": tenant_ids}
-    
+    # Cross-check supplied tenant_id against user's tenant_roles. The old
+    # behavior accepted any tenant_id parameter blindly for non-ADMIN.
+    query = scope_tenant_query(user, query, tenant_id)
+
     if status:
         query["status"] = status
     if risk_rating:
         query["risk_rating"] = risk_rating
     if case_type:
         query["case_type"] = case_type
-    
+
     cases = await db.cases.find(query, {
         "_id": 0, "id": 1, "case_ref": 1, "tenant_id": 1, "case_type": 1,
         "status": 1, "risk_rating": 1, "due_diligence_level": 1, "jurisdiction": 1,
@@ -71,13 +95,17 @@ async def list_cases(request: Request, tenant_id: Optional[str] = None, status: 
 
 @router.post("")
 async def create_case(body: CaseCreate, request: Request):
-    from middleware.auth_middleware import get_current_user, require_tenant_access
+    from middleware.auth_middleware import (
+        get_current_user, has_permission, require_tenant_access
+    )
     user = await get_current_user(request)
+    if not has_permission(user, "can_manage_cases"):
+        raise HTTPException(status_code=403, detail="Missing permission: can_manage_cases")
     require_tenant_access(body.tenant_id, user)
     db = get_db(request)
-    
+
     case_ref = f"DDY-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{str(uuid.uuid4())[:6].upper()}"
-    
+
     case = {
         "id": str(uuid.uuid4()),
         "case_ref": case_ref,
@@ -102,7 +130,7 @@ async def create_case(body: CaseCreate, request: Request):
         "deleted": False
     }
     await db.cases.insert_one({**case})
-    
+
     await db.audit_logs.insert_one({
         "id": str(uuid.uuid4()),
         "tenant_id": body.tenant_id,
@@ -117,21 +145,28 @@ async def create_case(body: CaseCreate, request: Request):
         "ip_address": request.client.host if request.client else "",
         "user_agent": request.headers.get("user-agent", "")
     })
-    
+
     return case
 
 
 @router.get("/{case_id}")
 async def get_case(case_id: str, request: Request):
-    from middleware.auth_middleware import get_current_user
+    from middleware.auth_middleware import (
+        get_current_user, require_tenant_access, require_customer_case_access
+    )
     user = await get_current_user(request)
     db = get_db(request)
-    
+
     case = await db.cases.find_one({"id": case_id, "deleted": {"$ne": True}}, {"_id": 0})
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
-    
-    # Enrich with related data
+
+    # END_CUSTOMER may only read their own case; staff must hold a tenant role.
+    if user.get("global_role") == "END_CUSTOMER":
+        require_customer_case_access(user, case)
+    else:
+        require_tenant_access(case["tenant_id"], user)
+
     parties = await db.parties.find({"case_id": case_id, "deleted": {"$ne": True}}, {"_id": 0}).to_list(100)
     requirements = await db.requirement_items.find({"case_id": case_id}, {"_id": 0}).to_list(500)
     documents = await db.documents.find({"case_id": case_id}, {"_id": 0}).to_list(500)
@@ -139,7 +174,7 @@ async def get_case(case_id: str, request: Request):
     risk_assessments = await db.risk_assessments.find({"case_id": case_id}, {"_id": 0}).to_list(10)
     approval_tasks = await db.approval_tasks.find({"case_id": case_id}, {"_id": 0}).to_list(100)
     waivers = await db.waivers.find({"case_id": case_id}, {"_id": 0}).to_list(50)
-    
+
     case["parties"] = parties
     case["requirements"] = requirements
     case["documents"] = documents
@@ -147,27 +182,36 @@ async def get_case(case_id: str, request: Request):
     case["risk_assessments"] = risk_assessments
     case["approval_tasks"] = approval_tasks
     case["waivers"] = waivers
-    
+
     return case
 
 
 @router.put("/{case_id}")
 async def update_case(case_id: str, body: CaseUpdate, request: Request):
-    from middleware.auth_middleware import get_current_user
+    from middleware.auth_middleware import (
+        get_current_user, has_permission, require_tenant_access
+    )
     user = await get_current_user(request)
+    if not has_permission(user, "can_manage_cases"):
+        raise HTTPException(status_code=403, detail="Missing permission: can_manage_cases")
     db = get_db(request)
-    
+
     before = await db.cases.find_one({"id": case_id}, {"_id": 0})
     if not before:
         raise HTTPException(status_code=404, detail="Case not found")
-    
+    require_tenant_access(before["tenant_id"], user)
+
     updates = {k: v for k, v in body.model_dump().items() if v is not None}
+    # The status field on this endpoint is ignored — it must flow through
+    # /transition or /status (admin-only). This prevents PUT /cases/:id
+    # from being a stealth backdoor for status transitions.
+    updates.pop("status", None)
     updates["updated_at"] = datetime.now(timezone.utc).isoformat()
     updates["last_action_at"] = datetime.now(timezone.utc).isoformat()
-    
+
     await db.cases.update_one({"id": case_id}, {"$set": updates})
     after = await db.cases.find_one({"id": case_id}, {"_id": 0})
-    
+
     await db.audit_logs.insert_one({
         "id": str(uuid.uuid4()),
         "tenant_id": before["tenant_id"],
@@ -182,19 +226,32 @@ async def update_case(case_id: str, body: CaseUpdate, request: Request):
         "ip_address": request.client.host if request.client else "",
         "user_agent": request.headers.get("user-agent", "")
     })
-    
-    return after
 
+    return after
 
 
 @router.put("/{case_id}/status")
 async def quick_status_change(case_id: str, request: Request):
-    """Quick status change (admin/staff only, no gating)."""
-    from middleware.auth_middleware import get_current_user
+    """ADMIN-only escape hatch for status changes.
+
+    All real transitions should flow through `/transition`, which enforces
+    the state machine, gating, and 4-eyes rules. This endpoint exists only
+    for administrative recovery (e.g. fixing a stuck case in production)
+    and is restricted to global ADMINs. The previous implementation
+    allowed any authenticated user — including END_CUSTOMER — to set any
+    status on any case, which entirely bypassed the workflow.
+    """
+    from middleware.auth_middleware import get_current_user, require_tenant_access
     user = await get_current_user(request)
+    if user.get("global_role") != "ADMIN":
+        raise HTTPException(status_code=403, detail="Only ADMIN can force a status change")
     db = get_db(request)
     body = await request.json()
     new_status = body.get("status")
+    reason = body.get("reason", "")
+
+    if not reason:
+        raise HTTPException(status_code=400, detail="A `reason` is required when forcing a status change")
 
     if new_status not in CASE_STATUSES:
         raise HTTPException(status_code=400, detail=f"Invalid status: {new_status}")
@@ -202,6 +259,7 @@ async def quick_status_change(case_id: str, request: Request):
     before = await db.cases.find_one({"id": case_id}, {"_id": 0})
     if not before:
         raise HTTPException(status_code=404, detail="Case not found")
+    require_tenant_access(before["tenant_id"], user)
 
     await db.cases.update_one({"id": case_id}, {"$set": {
         "status": new_status,
@@ -214,68 +272,82 @@ async def quick_status_change(case_id: str, request: Request):
         "tenant_id": before["tenant_id"],
         "actor_user_id": user["user_id"],
         "actor_role": user.get("global_role", ""),
-        "action_key": f"case.status_changed.{before['status']}_to_{new_status}",
+        "action_key": f"case.force_status.{before['status']}_to_{new_status}",
         "entity_type": "case",
         "entity_id": case_id,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "before_json": {"status": before["status"]},
-        "after_json": {"status": new_status},
+        "after_json": {"status": new_status, "reason": reason, "forced": True},
         "ip_address": request.client.host if request.client else "",
         "user_agent": request.headers.get("user-agent", "")
     })
 
-    return {"message": f"Status changed to {new_status}"}
-
+    return {"message": f"Status forced to {new_status}", "forced_by": user["user_id"], "reason": reason}
 
 
 @router.post("/{case_id}/transition")
 async def transition_case(case_id: str, request: Request):
-    from middleware.auth_middleware import get_current_user
+    from middleware.auth_middleware import (
+        get_current_user, has_permission, require_tenant_access
+    )
     user = await get_current_user(request)
+    if not has_permission(user, "can_approve_cases"):
+        raise HTTPException(status_code=403, detail="Missing permission: can_approve_cases")
     db = get_db(request)
     body = await request.json()
     target_status = body.get("target_status")
     notes = body.get("notes", "")
-    
+
     case = await db.cases.find_one({"id": case_id}, {"_id": 0})
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
-    
+    require_tenant_access(case["tenant_id"], user)
+
     current = case["status"]
-    
-    # Validate transition
-    valid_transitions = {
-        "draft": ["customer_in_progress"],
-        "customer_in_progress": ["customer_submitted"],
-        "customer_submitted": ["automated_checks"],
-        "automated_checks": ["maker_review"],
-        "maker_review": ["checker_review", "customer_in_progress"],
-        "checker_review": ["maker_review", "business_approval", "compliance_approval", "completed"],
-        "business_approval": ["compliance_approval", "mlro_approval", "completed"],
-        "compliance_approval": ["mlro_approval", "completed"],
-        "mlro_approval": ["completed"],
-        "completed": ["restricted", "offboarded"],
-        "restricted": ["maker_review", "offboarded"],
-    }
-    
-    allowed = valid_transitions.get(current, [])
+
+    allowed = VALID_TRANSITIONS.get(current, [])
     if target_status not in allowed:
         raise HTTPException(status_code=400, detail=f"Cannot transition from {current} to {target_status}")
-    
-    # Gating rules
+
+    # ---- Gating rules -------------------------------------------------
+
+    # All requirements approved / waived / auto-passed before entering checker_review.
     if target_status == "checker_review":
-        # Maker review cannot complete unless all requirements are approved or waived
         reqs = await db.requirement_items.find({"case_id": case_id}, {"_id": 0}).to_list(500)
         for req in reqs:
             if req["status"] not in ["approved", "waived", "auto_passed"]:
-                raise HTTPException(status_code=400, detail=f"Requirement '{req['requirement_key']}' is not approved/waived (status: {req['status']})")
-    
-    if target_status == "checker_review" and case.get("assigned_maker_id") == user["user_id"]:
-        # Maker cannot be checker (but in this case we're transitioning TO checker, so the checker will validate)
-        pass
-    
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Requirement '{req['requirement_key']}' is not approved/waived (status: {req['status']})"
+                )
+
+    # Maker ≠ Checker — actually enforced now (previously a `pass` stub).
+    # The user advancing into checker_review must not be the same person
+    # who acted as maker.
+    if target_status == "checker_review":
+        if case.get("assigned_maker_id") and case["assigned_maker_id"] == user["user_id"]:
+            raise HTTPException(
+                status_code=403,
+                detail="Maker and Checker must be different users (4-eyes principle)"
+            )
+
+    # When moving INTO maker_review from a customer state, assignment of
+    # the acting user as maker is implicit unless already set.
+    if target_status == "maker_review" and not case.get("assigned_maker_id"):
+        await db.cases.update_one({"id": case_id}, {"$set": {"assigned_maker_id": user["user_id"]}})
+        case["assigned_maker_id"] = user["user_id"]
+
+    # Likewise, taking checker_review records the checker.
+    if target_status == "checker_review":
+        await db.cases.update_one({"id": case_id}, {"$set": {"assigned_checker_id": user["user_id"]}})
+
+    # Rejection requires an explicit reason — auditors need it.
+    if target_status == "rejected" and not notes:
+        raise HTTPException(status_code=400, detail="Rejection requires a `notes` reason")
+
+    # Completion gates: high-risk needs MLRO sign-off via approval_tasks,
+    # which has its own role/4-eyes check (approvals.py).
     if target_status == "completed" and case.get("risk_rating") == "high":
-        # High-risk cases need MLRO approval
         mlro_approval = await db.approval_tasks.find_one({
             "case_id": case_id,
             "task_type": "mlro_approve",
@@ -284,24 +356,30 @@ async def transition_case(case_id: str, request: Request):
         }, {"_id": 0})
         if not mlro_approval:
             raise HTTPException(status_code=400, detail="High-risk cases require MLRO approval before completion")
-    
-    # Perform transition
+        # And the MLRO approver must not be the maker or checker.
+        decided_by = mlro_approval.get("decided_by")
+        if decided_by in (case.get("assigned_maker_id"), case.get("assigned_checker_id")):
+            raise HTTPException(
+                status_code=400,
+                detail="MLRO approver must be distinct from maker and checker"
+            )
+
+    # ---- Perform transition ------------------------------------------
     update_data = {
         "status": target_status,
         "updated_at": datetime.now(timezone.utc).isoformat(),
         "last_action_at": datetime.now(timezone.utc).isoformat()
     }
-    
-    # Set NRD for completed onboarding
+
     if target_status == "completed" and case["case_type"] in ["onboarding", "edr_full"]:
         risk = case.get("risk_rating", "medium")
         months_map = {"high": 12, "medium": 24, "low": 60}
         months = months_map.get(risk, 24)
         nrd = datetime.now(timezone.utc) + timedelta(days=months * 30)
         update_data["nrd_date"] = nrd.isoformat()
-    
+
     await db.cases.update_one({"id": case_id}, {"$set": update_data})
-    
+
     await db.audit_logs.insert_one({
         "id": str(uuid.uuid4()),
         "tenant_id": case["tenant_id"],
@@ -316,22 +394,27 @@ async def transition_case(case_id: str, request: Request):
         "ip_address": request.client.host if request.client else "",
         "user_agent": request.headers.get("user-agent", "")
     })
-    
+
     updated = await db.cases.find_one({"id": case_id}, {"_id": 0})
     return updated
 
 
 @router.post("/{case_id}/parties")
 async def add_party(case_id: str, request: Request):
-    from middleware.auth_middleware import get_current_user
+    from middleware.auth_middleware import (
+        get_current_user, has_permission, require_tenant_access
+    )
     user = await get_current_user(request)
+    if not has_permission(user, "can_manage_cases"):
+        raise HTTPException(status_code=403, detail="Missing permission: can_manage_cases")
     db = get_db(request)
     body = await request.json()
-    
+
     case = await db.cases.find_one({"id": case_id}, {"_id": 0})
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
-    
+    require_tenant_access(case["tenant_id"], user)
+
     party = {
         "id": str(uuid.uuid4()),
         "tenant_id": case["tenant_id"],
@@ -353,10 +436,9 @@ async def add_party(case_id: str, request: Request):
         "deleted": False
     }
     await db.parties.insert_one({**party})
-    
-    # Generate requirements for this party based on type and role
+
     await _generate_requirements(db, case, party)
-    
+
     await db.audit_logs.insert_one({
         "id": str(uuid.uuid4()),
         "tenant_id": case["tenant_id"],
@@ -371,21 +453,26 @@ async def add_party(case_id: str, request: Request):
         "ip_address": request.client.host if request.client else "",
         "user_agent": request.headers.get("user-agent", "")
     })
-    
+
     return party
 
 
 @router.put("/{case_id}/parties/{party_id}")
 async def update_party(case_id: str, party_id: str, request: Request):
     """Edit party data (all fields editable by hand)."""
-    from middleware.auth_middleware import get_current_user
+    from middleware.auth_middleware import (
+        get_current_user, has_permission, require_tenant_access
+    )
     user = await get_current_user(request)
+    if not has_permission(user, "can_manage_cases"):
+        raise HTTPException(status_code=403, detail="Missing permission: can_manage_cases")
     db = get_db(request)
     body = await request.json()
 
-    before = await db.parties.find_one({"id": party_id}, {"_id": 0})
+    before = await db.parties.find_one({"id": party_id, "case_id": case_id}, {"_id": 0})
     if not before:
         raise HTTPException(status_code=404, detail="Party not found")
+    require_tenant_access(before["tenant_id"], user)
 
     editable = [
         "party_type", "role_in_case", "first_name", "last_name", "legal_name",
@@ -416,12 +503,10 @@ async def update_party(case_id: str, party_id: str, request: Request):
     return after
 
 
-
-
 async def _generate_requirements(db, case, party):
     """Generate KYC requirements based on party type and role."""
     base_reqs = []
-    
+
     if party["party_type"] == "natural_person":
         base_reqs = [
             {"key": "identity_doc", "category": "identity", "label": "Government-issued ID"},
@@ -433,7 +518,7 @@ async def _generate_requirements(db, case, party):
         if party["role_in_case"] in ["client", "ubo"]:
             base_reqs.append({"key": "sof_sow", "category": "sof_sow", "label": "Source of Funds / Source of Wealth"})
             base_reqs.append({"key": "video_ident", "category": "video_ident", "label": "Video Identification"})
-    
+
     elif party["party_type"] == "legal_entity":
         base_reqs = [
             {"key": "registry_extract", "category": "existence", "label": "Registry Extract / Certificate of Incorporation"},
@@ -445,15 +530,25 @@ async def _generate_requirements(db, case, party):
             {"key": "adverse_media_entity", "category": "adverse_media", "label": "Entity Adverse Media Check"},
             {"key": "financial_statements", "category": "sof_sow", "label": "Financial Statements / Annual Report"},
         ]
-    
+
     elif party["party_type"] in ["trust", "foundation"]:
+        # Trust/foundation parties: same full screening package as natural
+        # persons + entity-style structural docs. Previously this branch
+        # only generated 4 requirements, missing PEP / adverse-media /
+        # financial-statements / ownership-chart — a regulator-relevant gap.
         base_reqs = [
             {"key": "trust_deed", "category": "existence", "label": "Trust Deed / Foundation Charter"},
             {"key": "registry_extract_trust", "category": "existence", "label": "Registry Extract (if applicable)"},
+            {"key": "ownership_chart_trust", "category": "ownership", "label": "Ownership / Control Structure Chart"},
+            {"key": "settlor_disclosure", "category": "authority", "label": "Settlor / Founder Disclosure"},
+            {"key": "trustee_authority", "category": "authority", "label": "Trustee / Council Member Authority"},
             {"key": "proof_of_address_trust", "category": "address", "label": "Proof of Address"},
             {"key": "sanctions_screening_trust", "category": "sanctions", "label": "Sanctions Screening"},
+            {"key": "pep_screening_trust", "category": "pep", "label": "PEP Screening"},
+            {"key": "adverse_media_trust", "category": "adverse_media", "label": "Adverse Media Check"},
+            {"key": "financial_statements_trust", "category": "sof_sow", "label": "Financial Statements / SoF-SoW"},
         ]
-    
+
     for req in base_reqs:
         item = {
             "id": str(uuid.uuid4()),
@@ -475,31 +570,55 @@ async def _generate_requirements(db, case, party):
 
 @router.get("/{case_id}/requirements")
 async def get_requirements(case_id: str, request: Request):
-    from middleware.auth_middleware import get_current_user
+    from middleware.auth_middleware import (
+        get_current_user, require_tenant_access, require_customer_case_access
+    )
     user = await get_current_user(request)
     db = get_db(request)
-    
+
+    case = await db.cases.find_one({"id": case_id}, {"_id": 0, "tenant_id": 1, "id": 1, "created_by": 1})
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found")
+    if user.get("global_role") == "END_CUSTOMER":
+        require_customer_case_access(user, case)
+    else:
+        require_tenant_access(case["tenant_id"], user)
+
     reqs = await db.requirement_items.find({"case_id": case_id}, {"_id": 0}).to_list(500)
     return reqs
 
 
 @router.put("/{case_id}/requirements/{req_id}")
 async def update_requirement(case_id: str, req_id: str, request: Request):
-    from middleware.auth_middleware import get_current_user
+    from middleware.auth_middleware import (
+        get_current_user, has_permission, require_tenant_access
+    )
     user = await get_current_user(request)
+    if not has_permission(user, "can_manage_cases"):
+        raise HTTPException(status_code=403, detail="Missing permission: can_manage_cases")
     db = get_db(request)
     body = await request.json()
-    
-    before = await db.requirement_items.find_one({"id": req_id}, {"_id": 0})
+
+    before = await db.requirement_items.find_one({"id": req_id, "case_id": case_id}, {"_id": 0})
     if not before:
         raise HTTPException(status_code=404, detail="Requirement not found")
-    
-    updates = {k: v for k, v in body.items() if k in ["status", "notes", "due_date"]}
+    require_tenant_access(before["tenant_id"], user)
+
+    allowed_statuses = {
+        "missing", "submitted", "needs_review", "auto_passed",
+        "approved", "rejected", "waived",
+    }
+    updates = {}
+    for key in ("status", "notes", "due_date"):
+        if key in body:
+            updates[key] = body[key]
+    if "status" in updates and updates["status"] not in allowed_statuses:
+        raise HTTPException(status_code=400, detail=f"Invalid requirement status: {updates['status']}")
     updates["updated_at"] = datetime.now(timezone.utc).isoformat()
     await db.requirement_items.update_one({"id": req_id}, {"$set": updates})
-    
+
     after = await db.requirement_items.find_one({"id": req_id}, {"_id": 0})
-    
+
     await db.audit_logs.insert_one({
         "id": str(uuid.uuid4()),
         "tenant_id": before["tenant_id"],
@@ -514,5 +633,5 @@ async def update_requirement(case_id: str, req_id: str, request: Request):
         "ip_address": request.client.host if request.client else "",
         "user_agent": request.headers.get("user-agent", "")
     })
-    
+
     return after

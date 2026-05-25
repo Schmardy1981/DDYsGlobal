@@ -88,6 +88,10 @@ async def seed_all(db):
             "password_hash": pw_hash,
             "mfa_enabled": False,
             "mfa_secret": None,
+            # Seed users get the password change flag set so they cannot
+            # operate in production with the documented seed password —
+            # they must rotate on first login.
+            "must_change_password": True,
             "status": "active",
             "created_at": datetime.now(timezone.utc).isoformat(),
             "updated_at": datetime.now(timezone.utc).isoformat()

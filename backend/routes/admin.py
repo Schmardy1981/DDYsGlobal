@@ -47,9 +47,15 @@ async def create_user(request: Request):
     if existing:
         raise HTTPException(status_code=400, detail="Email already exists")
     
-    password = body.get("password", "Welcome123!")
+    # Minimum complexity for an admin-provisioned password. Users created
+    # without a supplied password are still flagged with
+    # `must_change_password: True` so the next login forces a rotation —
+    # the admin can no longer leave the default `Welcome123!` in place.
+    password = body.get("password") or "Welcome123!"
+    if len(password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
     password_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
-    
+
     user = {
         "id": str(uuid.uuid4()),
         "email": body["email"],
@@ -58,6 +64,7 @@ async def create_user(request: Request):
         "password_hash": password_hash,
         "mfa_enabled": False,
         "mfa_secret": None,
+        "must_change_password": True,
         "status": "active",
         "created_at": datetime.now(timezone.utc).isoformat(),
         "updated_at": datetime.now(timezone.utc).isoformat()
@@ -176,20 +183,31 @@ async def get_settings(request: Request):
 
 import os
 
+# Field names in system_settings:global that contain secret material and
+# must be encrypted at rest.
+_SECRET_SETTINGS_FIELDS = {"custom_llm_key", "email_api_key", "screening_api_key"}
+
 @router.put("/settings")
 async def update_settings(request: Request):
     from middleware.auth_middleware import get_current_user
+    from services.secrets import encrypt_secret
     user = await get_current_user(request)
     if user.get("global_role") not in ["ADMIN"]:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
     db = get_db(request)
     body = await request.json()
-    
+
     updates = {}
     for key in ["llm_provider", "llm_model", "custom_llm_key", "email_provider", "email_api_key", "screening_provider", "screening_api_key", "video_ident_provider"]:
         if key in body:
-            updates[key] = body[key]
-    
+            value = body[key]
+            if key in _SECRET_SETTINGS_FIELDS and value and value != "***configured***":
+                value = encrypt_secret(value)
+            elif value == "***configured***":
+                # Don't overwrite an existing encrypted secret with the mask.
+                continue
+            updates[key] = value
+
     updates["updated_at"] = datetime.now(timezone.utc).isoformat()
     
     await db.system_settings.update_one(
@@ -218,14 +236,17 @@ async def update_settings(request: Request):
 
 @router.post("/seed")
 async def seed_demo_data(request: Request):
-    """Seed demo data for testing."""
+    """Seed demo data for testing. ADMIN-only."""
+    from middleware.auth_middleware import get_current_user
+    user = await get_current_user(request)
+    if user.get("global_role") != "ADMIN":
+        raise HTTPException(status_code=403, detail="Only ADMIN can seed")
     db = get_db(request)
-    
-    # Check if already seeded
+
     existing = await db.tenants.find_one({"name": "Demo Bank"}, {"_id": 0})
     if existing:
         return {"message": "Demo data already exists", "tenant_id": existing["id"]}
-    
+
     from routes.seed import seed_all
     result = await seed_all(db)
     return result

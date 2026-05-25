@@ -3,6 +3,8 @@ from typing import Optional
 import uuid
 from datetime import datetime, timezone
 
+from services.secrets import encrypt_secret, decrypt_secret, is_encrypted
+
 router = APIRouter(prefix="/api/integrations", tags=["integrations"])
 
 
@@ -119,13 +121,21 @@ DEFAULT_INTEGRATIONS = [
 ]
 
 
+def _password_field_keys(integ_def: dict) -> set:
+    return {f["key"] for f in integ_def.get("fields", []) if f["type"] == "password"}
+
+
 @router.get("")
 async def list_integrations(request: Request):
-    from middleware.auth_middleware import get_current_user
+    from middleware.auth_middleware import get_current_user, has_permission
     user = await get_current_user(request)
+    # Knowing which integrations are configured is sensitive (it tells an
+    # attacker which third-party services to attempt to compromise). Limit
+    # reads to those who can manage integrations.
+    if not has_permission(user, "can_manage_integrations"):
+        raise HTTPException(status_code=403, detail="Missing permission: can_manage_integrations")
     db = get_db(request)
 
-    # Get saved integration configs
     saved = await db.integrations.find({}, {"_id": 0}).to_list(100)
     saved_map = {s["key"]: s for s in saved}
 
@@ -136,12 +146,13 @@ async def list_integrations(request: Request):
         entry["enabled"] = saved_config.get("enabled", False)
         entry["connected"] = saved_config.get("connected", False)
         entry["last_tested"] = saved_config.get("last_tested")
-        # Mask API keys
+        # Mask API keys — never echo raw or encrypted values
         entry["configured_fields"] = {}
+        pwd_keys = _password_field_keys(integ)
         for field in integ["fields"]:
             val = saved_config.get("values", {}).get(field["key"], "")
-            if field["type"] == "password" and val:
-                entry["configured_fields"][field["key"]] = "***configured***"
+            if field["key"] in pwd_keys:
+                entry["configured_fields"][field["key"]] = "***configured***" if val else ""
             else:
                 entry["configured_fields"][field["key"]] = val
         result.append(entry)
@@ -158,13 +169,12 @@ async def update_integration(key: str, request: Request):
     db = get_db(request)
     body = await request.json()
 
-    # Find the integration definition
     integ_def = next((i for i in DEFAULT_INTEGRATIONS if i["key"] == key), None)
     if not integ_def:
         raise HTTPException(status_code=404, detail="Integration not found")
 
-    # Get existing or create new
     existing = await db.integrations.find_one({"key": key}, {"_id": 0})
+    existing_values = existing.get("values", {}) if existing else {}
 
     update = {
         "key": key,
@@ -176,19 +186,18 @@ async def update_integration(key: str, request: Request):
         "updated_at": datetime.now(timezone.utc).isoformat()
     }
 
-    # Merge values - keep existing passwords if new value is masked or empty
-    existing_values = existing.get("values", {}) if existing else {}
     new_values = body.get("values", {})
+    pwd_keys = _password_field_keys(integ_def)
     for field in integ_def["fields"]:
         fkey = field["key"]
         new_val = new_values.get(fkey, "")
         if new_val and new_val != "***configured***":
-            update["values"][fkey] = new_val
+            # New value supplied. Encrypt at rest if it's a secret field.
+            update["values"][fkey] = encrypt_secret(new_val) if fkey in pwd_keys else new_val
         elif fkey in existing_values:
             update["values"][fkey] = existing_values[fkey]
 
-    # Check if connected (has at least one API key configured)
-    has_key = any(update["values"].get(f["key"]) for f in integ_def["fields"] if f["type"] == "password")
+    has_key = any(update["values"].get(k) for k in pwd_keys)
     update["connected"] = has_key and update["enabled"]
 
     await db.integrations.update_one(
@@ -197,7 +206,6 @@ async def update_integration(key: str, request: Request):
         upsert=True
     )
 
-    # Bust provider singletons so the new credentials take effect immediately.
     try:
         from services.providers import reset_provider_singletons
         reset_provider_singletons()
@@ -226,16 +234,41 @@ async def update_integration(key: str, request: Request):
 async def test_integration(key: str, request: Request):
     from middleware.auth_middleware import get_current_user
     user = await get_current_user(request)
+    if user.get("global_role") not in ["ADMIN"]:
+        raise HTTPException(status_code=403, detail="Only super admin can test integrations")
     db = get_db(request)
 
     config = await db.integrations.find_one({"key": key}, {"_id": 0})
     if not config or not config.get("enabled"):
         return {"success": False, "message": "Integration not enabled"}
 
-    # Mock test - in production would actually test the connection
     await db.integrations.update_one(
         {"key": key},
         {"$set": {"last_tested": datetime.now(timezone.utc).isoformat(), "test_result": "success"}}
     )
 
     return {"success": True, "message": f"Connection to {config.get('name', key)} successful (mock test)"}
+
+
+# --- Helpers exposed for providers to fetch decrypted secrets ---
+
+async def get_integration_values(db, key: str) -> dict:
+    """Return a *decrypted* copy of an integration's saved values.
+
+    Provider code should never read the raw ``integrations.values`` dict
+    directly — it'll see ciphertext after the encryption migration. Going
+    through this helper guarantees plaintext at the point of use without
+    storing plaintext at rest.
+    """
+    config = await db.integrations.find_one({"key": key}, {"_id": 0})
+    if not config:
+        return {}
+    integ_def = next((i for i in DEFAULT_INTEGRATIONS if i["key"] == key), None)
+    pwd_keys = _password_field_keys(integ_def) if integ_def else set()
+    out = {}
+    for k, v in (config.get("values") or {}).items():
+        if k in pwd_keys:
+            out[k] = decrypt_secret(v) if is_encrypted(v) else v
+        else:
+            out[k] = v
+    return out

@@ -18,7 +18,10 @@ api.interceptors.response.use(
     if (err.response?.status === 401 && !err.config?.url?.includes('/auth/login')) {
       localStorage.removeItem('ddys_token');
       localStorage.removeItem('ddys_user');
-      window.location.href = '/login';
+      // Route end-customer flows back to /portal rather than the staff
+      // login page so they get the right entry point.
+      const isCustomerFlow = window.location.pathname.startsWith('/portal');
+      window.location.href = isCustomerFlow ? '/portal' : '/login';
     }
     return Promise.reject(err);
   }
